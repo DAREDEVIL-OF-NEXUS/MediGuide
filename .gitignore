@@ -1,0 +1,85 @@
+# ========================
+# MediGuide-AI .gitignore
+# ========================
+
+# --- Python / Backend ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+*.whl
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# --- Node / Frontend ---
+node_modules/
+frontend/dist/
+frontend/build/
+.vite/
+*.tsbuildinfo
+
+# --- Environment Variables ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+!backend/.env.example
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Docker ---
+docker-compose.override.yml
+
+# --- AI / ML ---
+ai/yolo/runs/
+ai/yolo/data/
+*.pt
+*.onnx
+*.engine
+!ai/yolo/models/.gitkeep
+!ai/yolo/models/best.pt
+
+# --- Logs ---
+*.log
+logs/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Databases ---
+*.db
+*.sqlite3
+*.sqlite
+
+# --- Misc ---
+*.bak
+*.tmp
+*.temp
+

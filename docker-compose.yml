@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  db:
+    image: postgres:16-alpine
+    container_name: mediguide-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mediguide
+      POSTGRES_PASSWORD: mediguide
+      POSTGRES_DB: mediguide
+    ports:
+      - "5432:5432"
+    volumes:
+      - mediguide_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mediguide"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mediguide_pgdata:
+    driver: local

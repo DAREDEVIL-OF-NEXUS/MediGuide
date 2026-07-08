@@ -1,0 +1,11 @@
+path: 'C:/Users/Rishabh Goyal/Documents/Mediguide/ai/yolo/data'
+train: 'train/images'
+val: 'val/images'
+test: 'test/images'
+
+names:
+  0: clinic_header
+  1: doctor_info
+  2: patient_info
+  3: medicine_block
+  4: signature

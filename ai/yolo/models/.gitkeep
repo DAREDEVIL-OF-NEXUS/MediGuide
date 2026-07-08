@@ -1,0 +1,3 @@
+# This directory will contain YOLO model weights
+# .pt, .onnx, and .engine files are gitignored
+# Place your trained weights here

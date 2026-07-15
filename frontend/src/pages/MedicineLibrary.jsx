@@ -22,16 +22,35 @@ function MedicineCard({ med }) {
             <Pill className="w-6 h-6 text-primary-400" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">{med.name}</h3>
-            {med.generic_name && (
-              <p className="text-sm text-dark-400">Generic: {med.generic_name}</p>
-            )}
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-xl font-bold text-white transition-colors">
+                {med.name}
+              </h3>
+              {med.source === 'OpenFDA' ? (
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> Verified
+                </span>
+              ) : (
+                <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" /> AI
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-dark-400">
+              {med.generic_name && (
+                <span className="flex items-center gap-1">
+                  <Tag className="w-3 h-3" /> {med.generic_name}
+                </span>
+              )}
+              {med.brand_names && med.brand_names.length > 0 && (
+                <span className="flex items-center gap-1 text-primary-400">
+                  <Tag className="w-3 h-3" /> Brands: {med.brand_names.slice(0, 2).join(', ')}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <span className="hidden md:inline-block px-3 py-1 rounded-full bg-dark-800 text-xs font-medium text-dark-300 border border-dark-700/50">
-            {med.category}
-          </span>
           {expanded ? <ChevronUp className="w-5 h-5 text-dark-500" /> : <ChevronDown className="w-5 h-5 text-dark-500" />}
         </div>
       </div>
@@ -45,7 +64,6 @@ function MedicineCard({ med }) {
             className="border-t border-dark-700/50 bg-dark-900/50"
           >
             <div className="p-5 space-y-6">
-              {/* Description */}
               {med.description && (
                 <div>
                   <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
@@ -55,7 +73,6 @@ function MedicineCard({ med }) {
                 </div>
               )}
 
-              {/* Side Effects */}
               {med.side_effects && med.side_effects.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
@@ -68,7 +85,6 @@ function MedicineCard({ med }) {
               )}
 
               <div className="grid md:grid-cols-2 gap-6">
-                {/* Interactions */}
                 {med.interactions && med.interactions.length > 0 && (
                   <div>
                     <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
@@ -80,17 +96,28 @@ function MedicineCard({ med }) {
                   </div>
                 )}
 
-                {/* Contraindications */}
-                {med.contraindications && med.contraindications.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-rose-400" /> Contraindications
-                    </h4>
-                    <ul className="list-disc pl-5 text-sm text-dark-300 space-y-1">
-                      {med.contraindications.map((ci, i) => <li key={i}>{ci}</li>)}
-                    </ul>
-                  </div>
-                )}
+                <div className="space-y-4">
+                  {med.contraindications && med.contraindications.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 text-rose-400" /> Contraindications
+                      </h4>
+                      <ul className="list-disc pl-5 text-sm text-dark-300 space-y-1">
+                        {med.contraindications.map((ci, i) => <li key={i}>{ci}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {med.warnings && med.warnings.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-rose-400" /> Warnings
+                      </h4>
+                      <ul className="list-disc pl-5 text-sm text-dark-300 space-y-1">
+                        {med.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Usage Instructions */}

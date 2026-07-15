@@ -18,6 +18,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.medicine import Medicine
+from app.services.openfda import OpenFDAService
+from app.services.rag_service import rag_service
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,7 @@ class MedicationIntelligenceService:
 
     def __init__(self) -> None:
         self._client = genai.Client(api_key=settings.gemini_api_key)
+        self.openfda_service = OpenFDAService()
 
     async def get_or_enrich_medicine(
         self, db: AsyncSession, name: str
@@ -49,24 +52,37 @@ class MedicationIntelligenceService:
             logger.info("Shared medicine cache hit: %s", normalised_name)
             return medicine
 
-        # 2. Enrich via Gemini if not in cache
-        logger.info("Cache miss for %s. Querying Medication Intelligence...", normalised_name)
-        try:
-            details = await self._query_gemini_details(normalised_name)
-        except Exception as exc:
-            logger.error("Failed to query Gemini for medicine %s: %s", normalised_name, exc)
-            # Safe fallback: create a basic record so the user is not blocked
-            details = {
-                "generic_name": None,
-                "category": "General Medication",
-                "description": f"No details available for {normalised_name}.",
-                "side_effects": [],
-                "interactions": [],
-                "contraindications": [],
-                "usage_instructions": None,
-            }
+        # 2. Try OpenFDA First
+        details = None
+        if getattr(settings, "use_real_medicine_database", True):
+            logger.info("Cache miss for %s. Querying OpenFDA API...", normalised_name)
+            details = await self.openfda_service.fetch_drug_data(normalised_name)
 
-        # 3. Create and save the new Medicine record
+        # 3. Fallback to Gemini if OpenFDA fails or is disabled
+        if not details:
+            logger.info("OpenFDA failed or disabled. Falling back to Gemini for %s", normalised_name)
+            try:
+                details = await self._query_gemini_details(normalised_name)
+                details["source"] = "AI-Generated (Gemini)"
+            except Exception as exc:
+                logger.error("Failed to query Gemini for medicine %s: %s", normalised_name, exc)
+                details = {
+                    "generic_name": None,
+                    "category": "General Medication",
+                    "description": f"No details available for {normalised_name}.",
+                    "side_effects": [],
+                    "interactions": [],
+                    "contraindications": [],
+                    "usage_instructions": None,
+                    "brand_names": [],
+                    "dosage_forms": [],
+                    "warnings": [],
+                    "pregnancy_category": None,
+                    "storage": None,
+                    "source": "System Default"
+                }
+
+        # 4. Create and save the new Medicine record
         medicine = Medicine(
             name=normalised_name,
             generic_name=details.get("generic_name"),
@@ -76,12 +92,33 @@ class MedicationIntelligenceService:
             interactions=details.get("interactions") or [],
             contraindications=details.get("contraindications") or [],
             usage_instructions=details.get("usage_instructions"),
+            brand_names=details.get("brand_names") or [],
+            dosage_forms=details.get("dosage_forms") or [],
+            warnings=details.get("warnings") or [],
+            pregnancy_category=details.get("pregnancy_category"),
+            storage=details.get("storage"),
+            source=details.get("source", "Unknown")
         )
         db.add(medicine)
         await db.flush()
         await db.refresh(medicine)
 
-        logger.info("Persisted enriched medicine: %s", normalised_name)
+        # 5. Index the newly discovered medicine in Vector DB (RAG)
+        if details.get("source") != "System Default":
+            await rag_service.index_medicine({
+                "name": normalised_name,
+                "generic_name": details.get("generic_name"),
+                "category": details.get("category"),
+                "description": details.get("description"),
+                "side_effects": details.get("side_effects") or [],
+                "interactions": details.get("interactions") or [],
+                "contraindications": details.get("contraindications") or [],
+                "warnings": details.get("warnings") or [],
+                "usage_instructions": details.get("usage_instructions"),
+                "source": details.get("source")
+            })
+
+        logger.info("Persisted enriched medicine: %s (Source: %s)", normalised_name, details.get("source"))
         return medicine
 
     async def _query_gemini_details(self, medicine_name: str) -> Dict[str, Any]:

@@ -44,7 +44,13 @@ async def list_medicines(
             "side_effects": m.side_effects,
             "interactions": m.interactions,
             "contraindications": m.contraindications,
+            "warnings": getattr(m, "warnings", []),
             "usage_instructions": m.usage_instructions,
+            "brand_names": getattr(m, "brand_names", []),
+            "dosage_forms": getattr(m, "dosage_forms", []),
+            "pregnancy_category": getattr(m, "pregnancy_category", None),
+            "storage": getattr(m, "storage", None),
+            "source": getattr(m, "source", "Unknown"),
         }
         for m in medicines
     ]

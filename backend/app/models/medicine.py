@@ -41,6 +41,12 @@ class Medicine(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # ── Structured safety data (JSON arrays) ─────────────────────────────
+    brand_names: Mapped[Optional[list]] = mapped_column(
+        JSON, default=list, server_default="[]"
+    )
+    dosage_forms: Mapped[Optional[list]] = mapped_column(
+        JSON, default=list, server_default="[]"
+    )
     side_effects: Mapped[Optional[list]] = mapped_column(
         JSON, default=list, server_default="[]"
     )
@@ -50,9 +56,20 @@ class Medicine(Base):
     contraindications: Mapped[Optional[list]] = mapped_column(
         JSON, default=list, server_default="[]"
     )
+    warnings: Mapped[Optional[list]] = mapped_column(
+        JSON, default=list, server_default="[]"
+    )
 
     usage_instructions: Mapped[Optional[str]] = mapped_column(
         Text, nullable=True
+    )
+    pregnancy_category: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )
+    storage: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    source: Mapped[str] = mapped_column(
+        String(50), default="Gemini", server_default="'Gemini'"
     )
 
     # ── Timestamps ───────────────────────────────────────────────────────

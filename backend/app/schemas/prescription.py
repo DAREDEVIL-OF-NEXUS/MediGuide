@@ -26,6 +26,8 @@ class MedicineExtracted(BaseModel):
     timing: Optional[str] = None
     duration_days: Optional[int] = None
     special_instructions: Optional[str] = None
+    confidence: Optional[float] = None
+    warnings: List[str] = Field(default_factory=list)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -41,6 +43,7 @@ class ExtractionResult(BaseModel):
     medicines: List[MedicineExtracted] = []
     notes: Optional[str] = None
     confidence_score: Optional[float] = None
+    rule_engine_warnings: List[str] = Field(default_factory=list)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -113,6 +113,13 @@ export default function PrescriptionUpload() {
     setVerificationData({ ...verificationData, medicines: updatedMeds });
   };
 
+  const getConfidenceColor = (conf) => {
+    if (conf === undefined || conf === null) return 'border-dark-700/50 bg-dark-800/50';
+    if (conf >= 0.8) return 'border-emerald-500/50 bg-emerald-500/5';
+    if (conf >= 0.5) return 'border-amber-500/50 bg-amber-500/5';
+    return 'border-rose-500/50 bg-rose-500/5';
+  };
+
   const formatFileSize = (bytes) => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -183,9 +190,27 @@ export default function PrescriptionUpload() {
                   <CheckCircle className="w-5 h-5 text-teal-400" /> Verify Details
                 </h2>
                 <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                  {verificationData.rule_engine_warnings && verificationData.rule_engine_warnings.length > 0 && (
+                    <div className="p-3 mb-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm">
+                      <p className="font-bold mb-1 flex items-center gap-1"><AlertCircle className="w-4 h-4"/> Rule Engine Warnings:</p>
+                      <ul className="list-disc pl-5 space-y-1">
+                        {verificationData.rule_engine_warnings.map((w, i) => <li key={i}>{w}</li>)}
+                      </ul>
+                    </div>
+                  )}
                   {verificationData.medicines?.map((med, i) => (
-                    <div key={i} className="p-4 bg-dark-800/50 rounded-xl border border-dark-700/50">
-                      <label className="block text-xs font-medium text-dark-400 mb-1">Medicine Name</label>
+                    <div key={i} className={`p-4 rounded-xl border ${getConfidenceColor(med.confidence)}`}>
+                      <div className="flex justify-between items-start mb-1">
+                        <label className="block text-xs font-medium text-dark-400">Medicine Name</label>
+                        {med.confidence !== undefined && (
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                            med.confidence >= 0.8 ? 'bg-emerald-500/20 text-emerald-400' :
+                            med.confidence >= 0.5 ? 'bg-amber-500/20 text-amber-400' : 'bg-rose-500/20 text-rose-400'
+                          }`}>
+                            {Math.round(med.confidence * 100)}% Confidence
+                          </span>
+                        )}
+                      </div>
                       <input 
                         type="text" className="input-field mb-3" value={med.medicine_name || ''} 
                         onChange={(e) => updateMedicine(i, 'medicine_name', e.target.value)} 
@@ -224,9 +249,15 @@ export default function PrescriptionUpload() {
                       
                       <label className="block text-xs font-medium text-dark-400 mb-1">Special Instructions</label>
                       <input 
-                        type="text" className="input-field text-sm" value={med.special_instructions || ''} 
+                        type="text" className="input-field text-sm mb-2" value={med.special_instructions || ''} 
                         onChange={(e) => updateMedicine(i, 'special_instructions', e.target.value)} 
                       />
+                      
+                      {med.warnings && med.warnings.length > 0 && (
+                        <div className="mt-2 text-xs text-rose-400 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20">
+                          {med.warnings.map((w, wIdx) => <p key={wIdx}>• {w}</p>)}
+                        </div>
+                      )}
                     </div>
                   ))}
                   {(!verificationData.medicines || verificationData.medicines.length === 0) && (

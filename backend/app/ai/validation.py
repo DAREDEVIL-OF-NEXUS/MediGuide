@@ -109,9 +109,10 @@ def validate_extraction(data: Dict[str, Any]) -> ExtractionResult:
     """
     warnings: List[str] = []
 
-    # --- Medicines ---
+    # --- Medicines & Rule Engine ---
     raw_medicines: list = data.get("medicines") or []
     validated_medicines: List[MedicineExtracted] = []
+    seen_medicines = set()
 
     for raw in raw_medicines:
         if not isinstance(raw, dict):
@@ -123,11 +124,38 @@ def validate_extraction(data: Dict[str, Any]) -> ExtractionResult:
             continue
 
         name = _normalise_medicine_name(name)
+        med_warnings = []
+        med_confidence = 1.0
+
+        # Duplicate check
+        if name.lower() in seen_medicines:
+            med_warnings.append(f"Duplicate medicine detected: {name}")
+            warnings.append(f"Duplicate medicine detected: {name}")
+            med_confidence -= 0.3
+        seen_medicines.add(name.lower())
 
         # Dosage sanity check
         dosage_warning = _check_dosage_range(name, raw.get("dosage"))
         if dosage_warning:
+            med_warnings.append(dosage_warning)
             warnings.append(dosage_warning)
+            med_confidence -= 0.2
+            
+        if not raw.get("dosage"):
+            med_confidence -= 0.2
+        if not raw.get("timing"):
+            med_confidence -= 0.1
+        if not raw.get("frequency"):
+            med_confidence -= 0.1
+        
+        duration = raw.get("duration_days")
+        if duration and isinstance(duration, int) and duration > 100:
+            msg = f"Suspicious duration: {duration} days for {name}"
+            med_warnings.append(msg)
+            warnings.append(msg)
+            med_confidence -= 0.3
+            
+        med_confidence = max(0.0, min(1.0, round(med_confidence, 2)))
 
         validated_medicines.append(
             MedicineExtracted(
@@ -137,6 +165,8 @@ def validate_extraction(data: Dict[str, Any]) -> ExtractionResult:
                 timing=raw.get("timing"),
                 duration_days=raw.get("duration_days"),
                 special_instructions=raw.get("special_instructions"),
+                confidence=med_confidence,
+                warnings=med_warnings
             )
         )
 
@@ -158,6 +188,7 @@ def validate_extraction(data: Dict[str, Any]) -> ExtractionResult:
         medicines=validated_medicines,
         notes="\n".join(notes_parts) if notes_parts else None,
         confidence_score=confidence,
+        rule_engine_warnings=warnings,
     )
 
     logger.info(

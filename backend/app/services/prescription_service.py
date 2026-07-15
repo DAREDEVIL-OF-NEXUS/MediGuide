@@ -234,8 +234,13 @@ async def verify_prescription(
     if prescription.status != "waiting_for_verification":
         raise ValueError(f"Prescription status is {prescription.status}, not waiting_for_verification")
 
+    # Log user corrections
+    original_data = prescription.validated_data or {}
+    verified_dump = verified_data.model_dump()
+    logger.info("Human Verification complete. Original: %s | Verified: %s", original_data, verified_dump)
+
     # Update validated data with human edits
-    prescription.validated_data = verified_data.model_dump()
+    prescription.validated_data = verified_dump
     prescription.status = "processed"
 
     # Create medicine line items

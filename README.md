@@ -1,194 +1,78 @@
-# 🏥 MediGuide-AI
+# MediGuide AI 🏥🤖
 
-> AI-powered medication adherence platform that transforms prescriptions into personalized, understandable, and actionable medication plans.
+MediGuide AI is a next-generation Hackathon MVP that automates prescription management, sets up dynamic medication reminders, and provides a verified, AI-driven Medical Assistant using true **Retrieval-Augmented Generation (RAG)** over the OpenFDA database.
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white)
-![Gemini](https://img.shields.io/badge/Gemini_AI-Vision-4285F4?style=for-the-badge&logo=google&logoColor=white)
-
----
-
-## 🎯 Problem
-
-Medication non-adherence is a **$300B+ global healthcare problem**. Patients struggle with:
-- Unreadable handwritten prescriptions
-- Complex dosage schedules they forget
-- No understanding of *why* they take each medicine
-- No tracking of adherence over time
-
-## 💡 Solution
-
-MediGuide-AI uses a **hybrid AI pipeline** to:
-1. **Understand** prescriptions using YOLO layout detection + Gemini Vision
-2. **Explain** medications in plain language with side effects and interactions
-3. **Schedule** dosages and send smart reminders
-4. **Track** adherence with analytics and insights
-5. **Assist** with an AI chatbot that knows your medication history
+## 🚀 Features
+- **Prescription Upload:** Extracts medicines and schedules from images using Gemini 2.5 Flash and a mock YOLO pipeline.
+- **Human-in-the-Loop Verification:** Review and edit extracted medicines before saving.
+- **Smart Reminders:** Automated background scheduler that manages dosages.
+- **True RAG Medical Assistant:** AI chatbot that answers questions based on a real OpenFDA vector database rather than hallucinating.
+- **Medicine Library:** View comprehensive drug details, warnings, pregnancy categories, and contraindications verified by OpenFDA.
 
 ## 🏗️ Architecture
+- **Frontend:** React + Vite + Tailwind CSS
+- **Backend:** FastAPI + SQLAlchemy (PostgreSQL with graceful SQLite fallback)
+- **AI/LLM:** Google Gemini 2.5 Flash
+- **RAG & Vector DB:** ChromaDB + Sentence Transformers (`all-MiniLM-L6-v2`)
+- **Knowledge Base:** OpenFDA Drug Labeling API
 
-```
-Prescription Image
-  → OpenCV Preprocessing
-  → YOLO Layout Detection (Phase 2)
-  → Gemini Vision Extraction
-  → Structured JSON
-  → Validation Layer
-  → Medication Intelligence Engine
-  → PostgreSQL
-  → Dashboard & Reminder System
-```
+## 🐳 Running in Production (Docker)
 
-## 🛠️ Tech Stack
+To run the entire stack (Frontend, Backend, PostgreSQL) with one command:
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, Vite, Tailwind CSS |
-| Backend | FastAPI, SQLAlchemy, PostgreSQL |
-| AI/ML | Gemini Vision, OpenCV, YOLO (Phase 2) |
-| Storage | Supabase Storage |
-| Notifications | Firebase Cloud Messaging (Phase 3) |
-| Deployment | Vercel (FE) + Railway (BE) |
+1. Copy the environment variables template:
+   ```bash
+   cd backend
+   cp .env.example .env
+   # Add your GEMINI_API_KEY to the .env file!
+   ```
 
-## 🚀 Quick Start
+2. Run Docker Compose:
+   ```bash
+   docker-compose up --build -d
+   ```
 
-### Prerequisites
-- Python 3.11+
-- Node.js 18+
-- Docker (for PostgreSQL)
+3. Access the app:
+   - Frontend: `http://localhost:5173`
+   - Backend API Docs: `http://localhost:8000/docs`
 
-### 1. Clone and Setup
+## 🛠️ Running Locally (Development)
 
-```bash
-git clone https://github.com/yourusername/mediguide-ai.git
-cd mediguide-ai
-```
-
-### 2. Start Database
-
-```bash
-docker-compose up -d
-```
-
-### 3. Backend Setup
-
+### 1. Backend Setup
 ```bash
 cd backend
 python -m venv venv
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # Mac/Linux
-
+# Windows: venv\Scripts\activate | Mac/Linux: source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your GEMINI_API_KEY
 
-# Configure environment
-copy .env.example .env       # Windows
-# cp .env.example .env       # Mac/Linux
-# Edit .env with your API keys
+# Optional: Generate DB migrations if needed
+# python -m alembic upgrade head
 
-# Run migrations
-
-alembic upgrade head
-
-# Start server
-uvicorn app.main:app --reload --port 8000
+# Start FastAPI server
+uvicorn app.main:app --reload
 ```
 
-### 4. Frontend Setup
-
+### 2. Frontend Setup
 ```bash
 cd frontend
 npm install
-
-# Start dev server
 npm run dev
 ```
 
-### 5. Open the App
+## 🔐 Environment Variables
+Check `backend/.env.example` for all configurable variables. Key ones include:
+- `GEMINI_API_KEY`: Required for prescription extraction and Assistant reasoning.
+- `OPENFDA_API_KEY`: Optional but recommended for higher rate limits on the drug knowledge base.
+- `DATABASE_URL`: Connection string to PostgreSQL. If unreachable, falls back to `FALLBACK_SQLITE_URL`.
+- `USE_RAG=true`: Enables ChromaDB vector embedding.
+- `USE_REAL_MEDICINE_DATABASE=true`: Enables fetching real facts from OpenFDA.
 
-Navigate to `http://localhost:5173`
-
-## 📁 Project Structure
-
-```
-MediGuide/
-├── backend/           # FastAPI backend
-│   ├── app/
-│   │   ├── ai/        # AI pipeline (OpenCV, Gemini)
-│   │   ├── core/      # Security, logging, exceptions
-│   │   ├── models/    # SQLAlchemy models
-│   │   ├── routers/   # API endpoints
-│   │   ├── schemas/   # Pydantic schemas
-│   │   ├── services/  # Business logic
-│   │   └── utils/     # Helpers (storage, etc.)
-│   └── alembic/       # Database migrations
-├── frontend/          # React frontend
-│   └── src/
-│       ├── components/
-│       ├── context/
-│       ├── pages/
-│       └── services/
-├── ai/                # AI model training (Phase 2)
-├── docs/              # Documentation
-└── docker-compose.yml # PostgreSQL
-```
-
-## 🔑 Environment Variables
-
-Copy `.env.example` to `.env` and configure:
-
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `SECRET_KEY` | JWT signing key |
-| `GEMINI_API_KEY` | Google AI Studio API key |
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_KEY` | Supabase anon key |
-
-## 📊 Development Phases
-
-- [x] **Phase 1**: Foundation — Auth, Upload, Basic AI Extraction
-- [x] **Phase 2**: Intelligence — YOLO Layout Model, Drug Knowledge, Schedules
-- [x] **Phase 3**: Adherence — Reminders, Tracking, Analytics
-- [x] **Phase 4**: Polish — AI Assistant Chat, Dynamic Dashboard, Production-ready Builds
-
----
-
-## 🧠 Machine Learning & Model Training
-
-### 1. YOLOv8 Layout Detection Model
-We train a custom **YOLOv8n** model to segment prescriptions into 5 critical layout regions: `clinic_header` (0), `doctor_info` (1), `patient_info` (2), `medicine_block` (3), and `signature` (4).
-
-To prepare the dataset and train the model:
-```bash
-# 1. Generate bounding box coordinates from dataset and structure files
-python ai/yolo/prepare_data.py
-
-# 2. Train the YOLOv8 model for 5 epochs
-python ai/yolo/train.py
-```
-This copies the trained weights to `ai/yolo/models/best.pt`.
-
-### 2. Gemini Vision Benchmarking
-To benchmark extraction accuracy against the dataset's ground truth annotations (test split):
-```bash
-python ai/benchmark_gemini.py --limit 10
-```
-This runs the test images through the pipeline, performs fuzzy and strict validations, and exports statistics to `ai/gemini_benchmark_results.json`.
-
----
-
-## 🧪 API Documentation
-
-Once the backend is running, visit:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-## 👨‍💻 Author
-
-Built by **Rishabh Goyal** — B.Tech CSE, DTU
-
-## 📄 License
-
-This project is licensed under the MIT License.
+## 📚 API Documentation
+Once running, visit `http://localhost:8000/docs` for interactive Swagger documentation covering:
+- `/auth`: Login/Register JWT authentication
+- `/prescriptions`: Upload and verify images
+- `/assistant`: Chatbot endpoints
+- `/medicines`: Medical knowledge base endpoints
+- `/dashboard`: Overall metrics

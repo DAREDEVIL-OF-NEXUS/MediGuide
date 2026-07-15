@@ -22,6 +22,41 @@ services:
       timeout: 5s
       retries: 5
 
+  # ============================================
+  # FastAPI Backend
+  # ============================================
+  backend:
+    build: ./backend
+    container_name: mediguide-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://mediguide:mediguide@db:5432/mediguide
+      - FALLBACK_SQLITE_URL=sqlite+aiosqlite:///./mediguide.db
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENFDA_API_KEY=${OPENFDA_API_KEY:-}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-supersecretkey}
+      - USE_REAL_MEDICINE_DATABASE=true
+      - USE_RAG=true
+    volumes:
+      - ./backend/chroma_db:/app/chroma_db
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ============================================
+  # React Frontend
+  # ============================================
+  frontend:
+    build: ./frontend
+    container_name: mediguide-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
 volumes:
   mediguide_pgdata:
     driver: local

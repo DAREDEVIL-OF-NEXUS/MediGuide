@@ -59,7 +59,7 @@ def _get_engine() -> AsyncEngine:
         db_url,
         echo=settings.debug,
         future=True,
-        **connect_args
+        connect_args=connect_args
     )
 
 engine = _get_engine()

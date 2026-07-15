@@ -348,6 +348,22 @@ export default function Dashboard() {
                   </div>
                   <ArrowRight className="w-4 h-4 text-dark-600 group-hover:text-dark-400 transition-colors" />
                 </Link>
+
+                <Link
+                  to="/history"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-dark-800/30 border border-dark-700/50 hover:border-dark-600 transition-all group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-dark-700/50 flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-dark-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-dark-200 group-hover:text-white transition-colors">
+                      Medical History
+                    </p>
+                    <p className="text-xs text-dark-500">Track your health</p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-dark-600 group-hover:text-dark-400 transition-colors" />
+                </Link>
               </div>
             </div>
 

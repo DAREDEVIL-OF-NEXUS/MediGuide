@@ -18,6 +18,7 @@ from app.models.user import User
 from app.schemas.prescription import (
     PrescriptionListResponse,
     PrescriptionResponse,
+    ExtractionResult,
 )
 from app.services import prescription_service
 
@@ -142,6 +143,34 @@ async def reprocess_prescription(
         db, prescription_id, current_user.id
     )
     return PrescriptionResponse.model_validate(clean_prescription)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Verify
+# ═══════════════════════════════════════════════════════════════════════════
+@router.post(
+    "/{prescription_id}/verify",
+    response_model=PrescriptionResponse,
+    summary="Submit human-verified extracted data",
+)
+async def verify_prescription(
+    prescription_id: UUID,
+    verified_data: ExtractionResult,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> PrescriptionResponse:
+    """Submit the human-verified extraction result to finalize processing.
+    
+    This creates the medication tracking records and generates schedules/reminders.
+    """
+    prescription = await prescription_service.verify_prescription(
+        db, prescription_id, current_user.id, verified_data
+    )
+    # Fetch fully loaded
+    clean_prescription = await prescription_service.get_prescription(
+        db, prescription_id, current_user.id
+    )
+    return PrescriptionResponse.model_validate(clean_prescription)
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════

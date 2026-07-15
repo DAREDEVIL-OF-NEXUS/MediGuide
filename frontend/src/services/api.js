@@ -79,6 +79,7 @@ export const prescriptions = {
   list: (params = {}) => api.get('/prescriptions', { params }),
   getById: (id) => api.get(`/prescriptions/${id}`),
   reprocess: (id) => api.post(`/prescriptions/${id}/reprocess`),
+  verify: (id, data) => api.post(`/prescriptions/${id}/verify`, data),
   delete: (id) => api.delete(`/prescriptions/${id}`),
 };
 

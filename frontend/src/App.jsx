@@ -12,6 +12,9 @@ import PrescriptionDetail from './pages/PrescriptionDetail';
 import MedicationSchedule from './pages/MedicationSchedule';
 import MedicalHistory from './pages/MedicalHistory';
 import AIAssistant from './pages/AIAssistant';
+import Home from './pages/Home';
+import About from './pages/About';
+import Architecture from './pages/Architecture';
 
 export default function App() {
   return (
@@ -43,6 +46,9 @@ export default function App() {
         />
         <Routes>
           {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/architecture" element={<Architecture />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
@@ -55,7 +61,6 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="prescriptions" element={<PrescriptionList />} />
             <Route path="prescriptions/upload" element={<PrescriptionUpload />} />
@@ -66,7 +71,7 @@ export default function App() {
           </Route>
 
           {/* Fallback Catch-All */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

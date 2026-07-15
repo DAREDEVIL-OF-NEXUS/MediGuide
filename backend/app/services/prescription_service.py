@@ -169,53 +169,19 @@ async def process_prescription(
         # 4. Update prescription
         prescription.raw_extraction = raw_result
         prescription.validated_data = validated.model_dump()
-        prescription.status = "processed"
+        prescription.status = "waiting_for_verification"
 
-        # 5. Create medicine line items and enrich shared knowledge cache
-        from app.services.medication_intelligence import MedicationIntelligenceService
-        from app.services.schedule_service import generate_schedules_for_prescription
-        
-        med_intel_service = MedicationIntelligenceService()
-        
-        for med in validated.medicines:
-            try:
-                db_medicine = await med_intel_service.get_or_enrich_medicine(db, med.medicine_name)
-                medicine_id = db_medicine.id
-            except Exception as exc:
-                logger.error("Failed to enrich/cache medicine %s: %s", med.medicine_name, exc)
-                medicine_id = None
-                
-            pm = PrescriptionMedicine(
-                prescription_id=prescription_id,
-                medicine_id=medicine_id,
-                medicine_name=med.medicine_name,
-                dosage=med.dosage,
-                frequency=med.frequency,
-                timing=med.timing,
-                duration_days=med.duration_days,
-                special_instructions=med.special_instructions,
-            )
-            db.add(pm)
-
-        # 6. Update extraction log
+        # 5. Update extraction log
         extraction_log.raw_response = raw_result
         extraction_log.confidence_score = validated.confidence_score
         extraction_log.status = "success"
 
         await db.flush()
-        
-        # Auto-generate schedules & reminders
-        try:
-            await generate_schedules_for_prescription(db, prescription.user_id, prescription_id)
-        except Exception as exc:
-            logger.error("Failed to auto-generate schedules for prescription %s: %s", prescription_id, exc)
-            
         await db.refresh(prescription)
 
         logger.info(
-            "Prescription %s processed — %d medicines extracted",
+            "Prescription %s processed — waiting for verification",
             prescription_id,
-            len(validated.medicines),
         )
         return prescription
 
@@ -259,3 +225,54 @@ async def delete_prescription(
     await db.delete(prescription)
     await db.flush()
     logger.info("Prescription %s deleted", prescription_id)
+
+async def verify_prescription(
+    db: AsyncSession, prescription_id: UUID, user_id: UUID, verified_data: ExtractionResult
+) -> Prescription:
+    """Take human-verified extraction data, create records and schedule."""
+    prescription = await get_prescription(db, prescription_id, user_id)
+    if prescription.status != "waiting_for_verification":
+        raise ValueError(f"Prescription status is {prescription.status}, not waiting_for_verification")
+
+    # Update validated data with human edits
+    prescription.validated_data = verified_data.model_dump()
+    prescription.status = "processed"
+
+    # Create medicine line items
+    from app.services.medication_intelligence import MedicationIntelligenceService
+    from app.services.schedule_service import generate_schedules_for_prescription
+    
+    med_intel_service = MedicationIntelligenceService()
+    
+    for med in verified_data.medicines:
+        try:
+            db_medicine = await med_intel_service.get_or_enrich_medicine(db, med.medicine_name)
+            medicine_id = db_medicine.id
+        except Exception as exc:
+            logger.error("Failed to enrich/cache medicine %s: %s", med.medicine_name, exc)
+            medicine_id = None
+            
+        pm = PrescriptionMedicine(
+            prescription_id=prescription_id,
+            medicine_id=medicine_id,
+            medicine_name=med.medicine_name,
+            dosage=med.dosage,
+            frequency=med.frequency,
+            timing=med.timing,
+            duration_days=med.duration_days,
+            special_instructions=med.special_instructions,
+        )
+        db.add(pm)
+
+    await db.flush()
+    
+    # Auto-generate schedules & reminders
+    try:
+        await generate_schedules_for_prescription(db, prescription.user_id, prescription_id)
+    except Exception as exc:
+        logger.error("Failed to auto-generate schedules for prescription %s: %s", prescription_id, exc)
+        
+    await db.refresh(prescription)
+    logger.info("Prescription %s verified and scheduled.", prescription_id)
+    return prescription
+

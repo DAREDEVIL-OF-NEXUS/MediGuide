@@ -3,20 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Upload,
-  Camera,
-  Image,
-  FileText,
-  X,
-  AlertCircle,
-  CheckCircle,
-  Loader2,
-  StickyNote,
+  Upload, Camera, Image, X, AlertCircle, CheckCircle, Loader2, StickyNote, ArrowRight, Activity
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { prescriptions } from '../services/api';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = {
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
@@ -29,21 +21,19 @@ export default function PrescriptionUpload() {
   const [notes, setNotes] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  
+  // Verification State
+  const [prescriptionId, setPrescriptionId] = useState(null);
+  const [verificationData, setVerificationData] = useState(null);
+  const [verifying, setVerifying] = useState(false);
+
   const navigate = useNavigate();
 
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
     if (rejectedFiles.length > 0) {
-      const error = rejectedFiles[0].errors[0];
-      if (error.code === 'file-too-large') {
-        toast.error('File is too large. Maximum size is 10MB.');
-      } else if (error.code === 'file-invalid-type') {
-        toast.error('Invalid file type. Please upload JPEG, PNG, or WebP.');
-      } else {
-        toast.error('Invalid file. Please try another.');
-      }
+      toast.error('Invalid file or too large. Max 10MB JPEG/PNG/WebP.');
       return;
     }
-
     if (acceptedFiles.length > 0) {
       const selected = acceptedFiles[0];
       setFile(selected);
@@ -53,7 +43,7 @@ export default function PrescriptionUpload() {
     }
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: ACCEPTED_TYPES,
     maxSize: MAX_FILE_SIZE,
@@ -66,57 +56,61 @@ export default function PrescriptionUpload() {
     setFile(null);
     setPreview(null);
     setUploadProgress(0);
+    setVerificationData(null);
+    setPrescriptionId(null);
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      toast.error('Please select a prescription image');
-      return;
-    }
-
+    if (!file) return;
     setUploading(true);
     setUploadProgress(0);
-
     try {
       const formData = new FormData();
       formData.append('file', file);
-      if (notes.trim()) {
-        formData.append('notes', notes.trim());
-      }
+      if (notes.trim()) formData.append('notes', notes.trim());
 
-      // Simulate progress for UX
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + Math.random() * 15;
-        });
+        setUploadProgress(prev => Math.min(prev + Math.random() * 15, 90));
       }, 300);
 
       const response = await prescriptions.upload(formData);
-
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      toast.success('Prescription uploaded successfully!');
-
-      setTimeout(() => {
-        const prescriptionId = response.data.id;
-        if (prescriptionId) {
-          navigate(`/prescriptions/${prescriptionId}`);
-        } else {
-          navigate('/prescriptions');
-        }
-      }, 500);
+      toast.success('Extracted successfully! Please verify.');
+      
+      const pId = response.data.id;
+      setPrescriptionId(pId);
+      
+      // Load raw_extraction / validated_data to verify
+      const rawExt = response.data.validated_data || response.data.raw_extraction || { medicines: [] };
+      setVerificationData(rawExt);
+      
     } catch (error) {
-      const msg = error.response?.data?.detail || 'Upload failed. Please try again.';
-      toast.error(msg);
+      toast.error(error.response?.data?.detail || 'Upload failed.');
       setUploadProgress(0);
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleVerifySubmit = async () => {
+    setVerifying(true);
+    try {
+      await prescriptions.verify(prescriptionId, verificationData);
+      toast.success('Prescription verified and saved!');
+      navigate(`/prescriptions/${prescriptionId}`);
+    } catch (error) {
+      toast.error('Verification failed. Try again.');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const updateMedicine = (index, field, value) => {
+    const updatedMeds = [...verificationData.medicines];
+    updatedMeds[index] = { ...updatedMeds[index], [field]: value };
+    setVerificationData({ ...verificationData, medicines: updatedMeds });
   };
 
   const formatFileSize = (bytes) => {
@@ -127,241 +121,133 @@ export default function PrescriptionUpload() {
 
   return (
     <div className="page-container">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl mx-auto"
-      >
-        {/* Header */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
             Upload <span className="gradient-text">Prescription</span>
           </h1>
           <p className="text-dark-400">
-            Take a photo or upload an image of your prescription. Our AI will extract all the details.
+            Take a photo. AI suggests, you confirm. We will automatically generate a schedule for you.
           </p>
         </div>
 
-        {/* Upload Area */}
-        <div className="glass-card overflow-hidden">
-          <div className="p-6">
-            <AnimatePresence mode="wait">
-              {!file ? (
-                <motion.div
-                  key="dropzone"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <div
-                    {...getRootProps()}
-                    className={`
-                      relative border-2 border-dashed rounded-2xl p-8 md:p-12 text-center cursor-pointer
-                      transition-all duration-300
-                      ${isDragActive
-                        ? 'border-primary-500 bg-primary-500/5'
-                        : 'border-dark-600/50 hover:border-dark-500 hover:bg-dark-800/30'
-                      }
-                    `}
-                  >
-                    <input {...getInputProps()} />
-
-                    <div className={`
-                      w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center transition-all duration-300
-                      ${isDragActive
-                        ? 'bg-primary-500/20 border border-primary-500/30'
-                        : 'bg-dark-800/50 border border-dark-700/50'
-                      }
-                    `}>
-                      <Upload className={`w-7 h-7 ${isDragActive ? 'text-primary-400' : 'text-dark-500'}`} />
-                    </div>
-
-                    <p className="text-base font-medium text-dark-200 mb-2">
-                      {isDragActive ? 'Drop your prescription here' : 'Drag & drop your prescription'}
-                    </p>
-                    <p className="text-sm text-dark-500 mb-6">or click to browse files</p>
-
-                    <div className="flex flex-wrap items-center justify-center gap-3">
-                      <span className="text-xs text-dark-600 bg-dark-800/50 px-3 py-1.5 rounded-lg border border-dark-700/50">
-                        JPEG
-                      </span>
-                      <span className="text-xs text-dark-600 bg-dark-800/50 px-3 py-1.5 rounded-lg border border-dark-700/50">
-                        PNG
-                      </span>
-                      <span className="text-xs text-dark-600 bg-dark-800/50 px-3 py-1.5 rounded-lg border border-dark-700/50">
-                        WebP
-                      </span>
-                      <span className="text-xs text-dark-600">
-                        Max 10MB
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Mobile camera button */}
-                  <div className="mt-4 sm:hidden">
-                    <label className="btn-secondary w-full flex items-center justify-center gap-2 cursor-pointer">
-                      <Camera className="w-5 h-5" />
-                      Take Photo
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) onDrop([f], []);
-                        }}
-                      />
-                    </label>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="preview"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                >
-                  {/* Image Preview */}
-                  <div className="relative rounded-xl overflow-hidden bg-dark-900 border border-dark-700/50 mb-4">
-                    <img
-                      src={preview}
-                      alt="Prescription preview"
-                      className="w-full max-h-96 object-contain"
-                    />
-                    {!uploading && (
-                      <button
-                        onClick={removeFile}
-                        className="absolute top-3 right-3 p-2 rounded-lg bg-dark-900/80 backdrop-blur-sm text-dark-300 hover:text-white hover:bg-dark-900 transition-all border border-dark-700/50"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* File info */}
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-dark-800/30 border border-dark-700/30 mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center flex-shrink-0">
-                      <Image className="w-5 h-5 text-primary-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-dark-200 truncate">{file.name}</p>
-                      <p className="text-xs text-dark-500">{formatFileSize(file.size)}</p>
-                    </div>
-                    <CheckCircle className="w-5 h-5 text-primary-400 flex-shrink-0" />
-                  </div>
-
-                  {/* Notes field */}
-                  <div className="mb-6">
-                    <label className="label flex items-center gap-2">
-                      <StickyNote className="w-3.5 h-3.5" />
-                      Notes (optional)
-                    </label>
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      className="input-field resize-none h-24"
-                      placeholder="Add any notes about this prescription..."
-                      disabled={uploading}
-                    />
-                  </div>
-
-                  {/* Upload progress */}
-                  {uploading && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="mb-6"
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Upload / Image Area */}
+          <div className="glass-card overflow-hidden">
+            <div className="p-6">
+              <AnimatePresence mode="wait">
+                {!file ? (
+                  <motion.div key="dropzone" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <div
+                      {...getRootProps()}
+                      className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all
+                        ${isDragActive ? 'border-primary-500 bg-primary-500/5' : 'border-dark-600 hover:border-dark-500 hover:bg-dark-800/30'}
+                      `}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 text-primary-400 animate-spin" />
-                          <span className="text-sm text-dark-300 font-medium">
-                            {uploadProgress < 90
-                              ? 'Uploading prescription...'
-                              : uploadProgress < 100
-                              ? 'Processing with AI...'
-                              : 'Complete!'}
-                          </span>
-                        </div>
-                        <span className="text-sm text-dark-400 font-mono">
-                          {Math.round(uploadProgress)}%
-                        </span>
-                      </div>
-                      <div className="w-full h-2 bg-dark-800 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-primary-500 to-teal-500 rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${uploadProgress}%` }}
-                          transition={{ duration: 0.3 }}
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-3">
-                    {!uploading && (
-                      <button onClick={removeFile} className="btn-secondary flex-1">
-                        Change Image
-                      </button>
-                    )}
-                    <button
-                      onClick={handleUpload}
-                      disabled={uploading}
-                      className="btn-primary flex-1 flex items-center justify-center gap-2"
-                    >
-                      {uploading ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-5 h-5" />
-                          Upload & Extract
-                        </>
+                      <input {...getInputProps()} />
+                      <Upload className={`w-10 h-10 mx-auto mb-4 ${isDragActive ? 'text-primary-400' : 'text-dark-500'}`} />
+                      <p className="font-medium text-dark-200 mb-2">Drag & drop your prescription</p>
+                      <p className="text-sm text-dark-500">Max 10MB JPEG, PNG, WebP</p>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div key="preview" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+                    <div className="relative rounded-xl overflow-hidden bg-dark-900 border border-dark-700/50 mb-4">
+                      <img src={preview} alt="Preview" className="w-full max-h-[500px] object-contain" />
+                      {!uploading && !verificationData && (
+                        <button onClick={removeFile} className="absolute top-3 right-3 p-2 rounded-lg bg-black/50 text-white hover:bg-black/80">
+                          <X className="w-4 h-4" />
+                        </button>
                       )}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* Tips */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mt-6 p-5 rounded-2xl bg-dark-800/20 border border-dark-700/30"
-        >
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-dark-300 mb-2">Tips for best results</p>
-              <ul className="space-y-1">
-                <li className="text-xs text-dark-500 flex items-start gap-2">
-                  <span className="text-primary-500 mt-1">•</span>
-                  Ensure the prescription is well-lit and clearly readable
-                </li>
-                <li className="text-xs text-dark-500 flex items-start gap-2">
-                  <span className="text-primary-500 mt-1">•</span>
-                  Include the entire prescription in the frame
-                </li>
-                <li className="text-xs text-dark-500 flex items-start gap-2">
-                  <span className="text-primary-500 mt-1">•</span>
-                  Avoid shadows and reflections on the paper
-                </li>
-                <li className="text-xs text-dark-500 flex items-start gap-2">
-                  <span className="text-primary-500 mt-1">•</span>
-                  Use landscape orientation for wider prescriptions
-                </li>
-              </ul>
+                    </div>
+                    
+                    {!verificationData && (
+                      <div className="flex gap-3 mt-4">
+                        <button onClick={removeFile} className="btn-secondary flex-1" disabled={uploading}>Cancel</button>
+                        <button onClick={handleUpload} disabled={uploading} className="btn-primary flex-1 flex items-center justify-center gap-2">
+                          {uploading ? <><Loader2 className="w-5 h-5 animate-spin" /> Extracting AI...</> : <><Activity className="w-5 h-5"/> Analyze Prescription</>}
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
-        </motion.div>
+
+          {/* Verification Area */}
+          <div>
+            {verificationData ? (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-6 h-full flex flex-col">
+                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-teal-400" /> Verify Details
+                </h2>
+                <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                  {verificationData.medicines?.map((med, i) => (
+                    <div key={i} className="p-4 bg-dark-800/50 rounded-xl border border-dark-700/50">
+                      <label className="block text-xs font-medium text-dark-400 mb-1">Medicine Name</label>
+                      <input 
+                        type="text" className="input-field mb-3" value={med.medicine_name || ''} 
+                        onChange={(e) => updateMedicine(i, 'medicine_name', e.target.value)} 
+                      />
+                      
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <label className="block text-xs font-medium text-dark-400 mb-1">Dosage</label>
+                          <input 
+                            type="text" className="input-field" value={med.dosage || ''} 
+                            onChange={(e) => updateMedicine(i, 'dosage', e.target.value)} 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-dark-400 mb-1">Frequency</label>
+                          <input 
+                            type="text" className="input-field" value={med.frequency || ''} 
+                            onChange={(e) => updateMedicine(i, 'frequency', e.target.value)} 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-dark-400 mb-1">Timing</label>
+                          <input 
+                            type="text" className="input-field" value={med.timing || ''} 
+                            onChange={(e) => updateMedicine(i, 'timing', e.target.value)} 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-dark-400 mb-1">Duration (days)</label>
+                          <input 
+                            type="number" className="input-field" value={med.duration_days || ''} 
+                            onChange={(e) => updateMedicine(i, 'duration_days', parseInt(e.target.value) || 0)} 
+                          />
+                        </div>
+                      </div>
+                      
+                      <label className="block text-xs font-medium text-dark-400 mb-1">Special Instructions</label>
+                      <input 
+                        type="text" className="input-field text-sm" value={med.special_instructions || ''} 
+                        onChange={(e) => updateMedicine(i, 'special_instructions', e.target.value)} 
+                      />
+                    </div>
+                  ))}
+                  {(!verificationData.medicines || verificationData.medicines.length === 0) && (
+                    <p className="text-rose-400 text-sm">No medicines found. Please try a clearer image.</p>
+                  )}
+                </div>
+                <div className="pt-6 mt-4 border-t border-dark-700/50">
+                  <button onClick={handleVerifySubmit} disabled={verifying} className="btn-primary w-full flex justify-center items-center gap-2">
+                    {verifying ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle className="w-5 h-5"/> Confirm & Save</>}
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <div className="glass-card p-6 h-full flex flex-col justify-center items-center text-center">
+                <AlertCircle className="w-12 h-12 text-dark-600 mb-4" />
+                <h3 className="text-lg font-medium text-dark-400 mb-2">Awaiting AI Extraction</h3>
+                <p className="text-sm text-dark-500 max-w-xs">Upload your prescription and wait for the AI to extract details. You will be able to review and correct any errors before saving.</p>
+              </div>
+            )}
+          </div>
+        </div>
       </motion.div>
     </div>
   );

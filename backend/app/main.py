@@ -21,7 +21,7 @@ from slowapi.util import get_remote_address
 from app.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import register_middleware, setup_logging
-from app.routers import auth, prescriptions, medications, medical_history, reminders, assistant
+from app.routers import auth, prescriptions, medications, medical_history, reminders, assistant, medicines
 
 # ---------------------------------------------------------------------------
 # Logging (must be first so other modules' loggers pick up the config)
@@ -76,6 +76,7 @@ app.include_router(medications.router, prefix=API_PREFIX)
 app.include_router(medical_history.router, prefix=API_PREFIX)
 app.include_router(reminders.router, prefix=API_PREFIX)
 app.include_router(assistant.router, prefix=API_PREFIX)
+app.include_router(medicines.router, prefix=API_PREFIX)
 
 # Mount local uploads static directory
 os.makedirs("app/static/uploads", exist_ok=True)

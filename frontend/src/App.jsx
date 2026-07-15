@@ -12,6 +12,7 @@ import PrescriptionDetail from './pages/PrescriptionDetail';
 import MedicationSchedule from './pages/MedicationSchedule';
 import MedicalHistory from './pages/MedicalHistory';
 import AIAssistant from './pages/AIAssistant';
+import MedicineLibrary from './pages/MedicineLibrary';
 import Home from './pages/Home';
 import About from './pages/About';
 import Architecture from './pages/Architecture';
@@ -68,6 +69,7 @@ export default function App() {
             <Route path="schedule" element={<MedicationSchedule />} />
             <Route path="history" element={<MedicalHistory />} />
             <Route path="assistant" element={<AIAssistant />} />
+            <Route path="medicines" element={<MedicineLibrary />} />
           </Route>
 
           {/* Fallback Catch-All */}

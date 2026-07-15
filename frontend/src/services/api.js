@@ -109,5 +109,9 @@ export const assistant = {
   chat: (data) => api.post('/assistant/chat', data),
 };
 
+export const medicines = {
+  list: (params) => api.get('/medicines', { params }),
+};
+
 export default api;
 

@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   Plus,
   Activity,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -22,6 +23,7 @@ const navItems = [
   { to: '/prescriptions', icon: FileText, label: 'My Prescriptions' },
   { to: '/schedule', icon: CalendarClock, label: 'Medication Schedule' },
   { to: '/history', icon: Activity, label: 'Medical History' },
+  { to: '/medicines', icon: BookOpen, label: 'Medicine Library' },
   { to: '/assistant', icon: Bot, label: 'AI Assistant' },
 ];
 

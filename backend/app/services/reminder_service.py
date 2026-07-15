@@ -12,6 +12,33 @@ import logging
 from datetime import date, datetime, timedelta
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+import threading
+
+def play_alarm():
+    """Play a local alarm sound."""
+    try:
+        import winsound
+        # Play a sequence of beeps
+        for _ in range(3):
+            winsound.Beep(1000, 400)
+            winsound.Beep(1500, 400)
+    except Exception as e:
+        logger.warning(f"winsound failed, trying pygame: {e}")
+        try:
+            import pygame
+            pygame.mixer.init()
+            # If we had a specific sound file, we would load it here.
+            # Without a file, pygame can't easily synthesize a beep out of the box in 1 line
+            logger.info("pygame initialized, but no sound file available for alarm.")
+        except Exception as py_e:
+            logger.warning(f"pygame also failed: {py_e}")
+
+def send_email_reminder(email_to: str, subject: str, body: str):
+    """Stub for sending email reminders (Priority 2)."""
+    logger.info(f"EMAIL DISPATCH: Sending to {email_to} -> {subject}")
+    # In a real app, this would use aiosmtplib or sendgrid to dispatch the email.
+    pass
+
 
 from app.models.notification import Notification
 from app.models.prescription import PrescriptionMedicine
@@ -85,13 +112,20 @@ async def dispatch_due_reminders(db: AsyncSession) -> int:
             )
             db.add(notification)
 
-            # 5. Local Emulator Console Fallback
+            # 5. Local Alarm (Priority 1)
+            threading.Thread(target=play_alarm, daemon=True).start()
+            
+            # 6. Email Reminder (Priority 2)
+            user_email = sched.user.email if hasattr(sched.user, 'email') else f"user_{sched.user_id}@mediguide.ai"
+            send_email_reminder(user_email, notification.title, notification.body)
+
+            # 7. Local Emulator Console Fallback
             print(
-                f"\n=== [NOTIFICATION EMULATOR] ==="
+                f"\n=== [LOCAL ALARM & NOTIFICATION] ==="
                 f"\nSending alert to User: {sched.user_id}"
                 f"\nTitle: {notification.title}"
                 f"\nBody:  {notification.body}"
-                f"\n===============================\n"
+                f"\n=====================================\n"
             )
             logger.info("Reminder dispatched for schedule slot: %s", sched.id)
             dispatched_count += 1

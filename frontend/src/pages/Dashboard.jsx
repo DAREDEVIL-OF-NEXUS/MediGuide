@@ -12,6 +12,7 @@ import {
   Bot,
   Sparkles,
   ChevronRight,
+  AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { prescriptions as prescriptionsApi, medications as medicationsApi } from '../services/api';
@@ -157,6 +158,11 @@ export default function Dashboard() {
   // Get the next 3 upcoming unlogged doses for today
   const upcomingDoses = todaySchedule
     .filter((d) => !d.log_status || d.log_status === 'pending')
+    .slice(0, 3);
+
+  // Get missed doses
+  const missedDoses = todaySchedule
+    .filter((d) => d.log_status === 'missed')
     .slice(0, 3);
 
   if (loading) {
@@ -312,6 +318,36 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
+
+            {/* Missed Medicines */}
+            {missedDoses.length > 0 && (
+              <div className="glass-card p-5 border-rose-500/20">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                    <AlertCircle className="w-4.5 h-4.5 text-rose-400" />
+                    Missed Medicines
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  {missedDoses.map((dose) => (
+                    <div
+                      key={dose.id}
+                      className="flex items-center justify-between p-3 rounded-xl bg-rose-500/10 border border-rose-500/20"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0 text-rose-400">
+                          <Clock className="w-4.5 h-4.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-dark-200 truncate">{dose.medicine_name}</p>
+                          <p className="text-xs text-rose-400/80 truncate">Missed at {formatTime(dose.scheduled_time)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Quick Actions */}
             <div className="glass-card p-5">

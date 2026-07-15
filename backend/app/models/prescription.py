@@ -17,6 +17,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    Float,
     String,
     Text,
     func,
@@ -123,6 +124,10 @@ class PrescriptionMedicine(Base):
     special_instructions: Mapped[Optional[str]] = mapped_column(
         Text, nullable=True
     )
+    
+    # ── Explainable AI ───────────────────────────────────────────────────
+    bbox: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     # ── Timestamps ───────────────────────────────────────────────────────
     created_at: Mapped[datetime] = mapped_column(

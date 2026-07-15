@@ -34,10 +34,60 @@ def play_alarm():
             logger.warning(f"pygame also failed: {py_e}")
 
 def send_email_reminder(email_to: str, subject: str, body: str):
-    """Stub for sending email reminders (Priority 2)."""
-    logger.info(f"EMAIL DISPATCH: Sending to {email_to} -> {subject}")
-    # In a real app, this would use aiosmtplib or sendgrid to dispatch the email.
-    pass
+    """Real implementation of sending email reminders using SMTP."""
+    from app.config import settings
+    if not settings.use_email_reminders or not settings.smtp_username or not settings.smtp_password:
+        logger.info(f"EMAIL DISPATCH: Skipping due to config. To: {email_to} -> {subject}")
+        return
+
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = settings.smtp_from_email
+    msg["To"] = email_to
+
+    # Plain text and HTML template
+    text = body
+    html = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #0ea5e9;">MediGuide AI Reminder</h2>
+        <p style="font-size: 16px;">{body}</p>
+        <hr style="border: none; border-top: 1px solid #eaeaea; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #888;">This is an automated message from your MediGuide AI assistant.</p>
+      </body>
+    </html>
+    """
+
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+    msg.attach(part1)
+    msg.attach(part2)
+
+    def _send():
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                server = smtplib.SMTP(settings.smtp_server, settings.smtp_port, timeout=10)
+                server.ehlo()
+                server.starttls()
+                server.login(settings.smtp_username, settings.smtp_password)
+                server.sendmail(settings.smtp_from_email, email_to, msg.as_string())
+                server.quit()
+                logger.info(f"EMAIL DISPATCH SUCCESS: Sent to {email_to}")
+                break
+            except Exception as e:
+                logger.warning(f"Email attempt {attempt + 1} failed: {e}")
+                import time
+                time.sleep(2)
+        else:
+            logger.error(f"EMAIL DISPATCH FAILED: Could not send to {email_to} after {max_retries} attempts.")
+
+    # Run in background to avoid blocking
+    threading.Thread(target=_send, daemon=True).start()
 
 
 from app.models.notification import Notification

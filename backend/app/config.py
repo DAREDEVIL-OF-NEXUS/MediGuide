@@ -51,6 +51,13 @@ class Settings(BaseSettings):
     supabase_key: str = "your-supabase-key"
     supabase_bucket: str = "prescriptions"
 
+    # ── SMTP (Email Reminders) ───────────────────────────────────────────
+    smtp_server: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = "noreply@mediguide.ai"
+
     # ── CORS ─────────────────────────────────────────────────────────────
     cors_origins: List[str] = ["http://localhost:5173"]
 

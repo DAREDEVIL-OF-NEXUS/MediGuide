@@ -21,6 +21,8 @@ Analyze the uploaded prescription image carefully and extract ALL information in
 7. Frequency should be normalised to a standard phrase (e.g. "once daily", "twice daily", "three times daily", "every 8 hours").
 8. Timing should describe when to take the medicine relative to meals (e.g. "before breakfast", "after meals", "at bedtime").
 9. Duration should be in whole days. Convert weeks → days (1 week = 7 days).
+10. For each medicine, provide a bounding box "bbox" indicating where it was found in the image. Format is [ymin, xmin, ymax, xmax] using normalized coordinates [0, 1000].
+11. Provide a "confidence" score between 0.0 and 1.0 indicating how confident you are in the medicine name extraction.
 
 ## EXPECTED JSON SCHEMA
 {
@@ -34,8 +36,10 @@ Analyze the uploaded prescription image carefully and extract ALL information in
       "dosage": "string or null",
       "frequency": "string or null",
       "timing": "string or null",
-      "duration_days": integer or null,
-      "special_instructions": "string or null"
+      "duration_days": "integer or null",
+      "special_instructions": "string or null",
+      "bbox": "[ymin, xmin, ymax, xmax] (normalized 0-1000) or null",
+      "confidence": "float between 0.0 and 1.0"
     }
   ],
   "notes": "string or null — include any additional observations, illegible text warnings, or uncertainty notes"
@@ -58,7 +62,9 @@ Expected output:
       "frequency": "three times daily",
       "timing": "after meals",
       "duration_days": 7,
-      "special_instructions": "Complete the full course"
+      "special_instructions": "Complete the full course",
+      "bbox": [300, 150, 350, 400],
+      "confidence": 0.98
     },
     {
       "medicine_name": "Paracetamol",
@@ -66,7 +72,9 @@ Expected output:
       "frequency": "as needed",
       "timing": "every 6 hours if fever",
       "duration_days": 5,
-      "special_instructions": "Do not exceed 4 tablets per day"
+      "special_instructions": "Do not exceed 4 tablets per day",
+      "bbox": [400, 150, 450, 400],
+      "confidence": 0.95
     }
   ],
   "notes": null

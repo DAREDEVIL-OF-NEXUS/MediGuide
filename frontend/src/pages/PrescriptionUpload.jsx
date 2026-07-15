@@ -22,6 +22,10 @@ export default function PrescriptionUpload() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   
+  // Explainable AI State
+  const [showOverlays, setShowOverlays] = useState(true);
+  const [activeBboxIndex, setActiveBboxIndex] = useState(null);
+  
   // Verification State
   const [prescriptionId, setPrescriptionId] = useState(null);
   const [verificationData, setVerificationData] = useState(null);
@@ -159,14 +163,48 @@ export default function PrescriptionUpload() {
                   </motion.div>
                 ) : (
                   <motion.div key="preview" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-                    <div className="relative rounded-xl overflow-hidden bg-dark-900 border border-dark-700/50 mb-4">
+                    <div className="relative rounded-xl overflow-hidden bg-dark-900 border border-dark-700/50 mb-4" style={{ position: 'relative' }}>
                       <img src={preview} alt="Preview" className="w-full max-h-[500px] object-contain" />
+                      
+                      {/* Explainable AI Overlays */}
+                      {showOverlays && verificationData?.medicines?.map((med, idx) => {
+                        if (!med.bbox) return null;
+                        const [ymin, xmin, ymax, xmax] = med.bbox;
+                        const top = `${ymin / 10}%`;
+                        const left = `${xmin / 10}%`;
+                        const height = `${(ymax - ymin) / 10}%`;
+                        const width = `${(xmax - xmin) / 10}%`;
+                        
+                        const isActive = activeBboxIndex === idx;
+                        return (
+                          <div
+                            key={idx}
+                            style={{ top, left, height, width, position: 'absolute' }}
+                            className={`border-2 transition-all duration-300 ${
+                              isActive ? 'border-primary-400 bg-primary-400/20 z-10 scale-[1.02] shadow-[0_0_15px_rgba(56,189,248,0.5)]' 
+                                      : 'border-emerald-500/50 bg-emerald-500/10 hover:border-emerald-400 hover:bg-emerald-400/20'
+                            }`}
+                            onMouseEnter={() => setActiveBboxIndex(idx)}
+                            onMouseLeave={() => setActiveBboxIndex(null)}
+                          />
+                        );
+                      })}
+
                       {!uploading && !verificationData && (
-                        <button onClick={removeFile} className="absolute top-3 right-3 p-2 rounded-lg bg-black/50 text-white hover:bg-black/80">
+                        <button onClick={removeFile} className="absolute top-3 right-3 p-2 rounded-lg bg-black/50 text-white hover:bg-black/80 z-20">
                           <X className="w-4 h-4" />
                         </button>
                       )}
                     </div>
+                    
+                    {verificationData && (
+                      <div className="flex justify-between items-center mt-2 px-2">
+                        <label className="flex items-center gap-2 text-sm text-dark-300 cursor-pointer hover:text-white transition-colors">
+                          <input type="checkbox" checked={showOverlays} onChange={(e) => setShowOverlays(e.target.checked)} className="rounded border-dark-600 bg-dark-800 text-primary-500 focus:ring-primary-500" />
+                          Show Explainable AI Overlays
+                        </label>
+                      </div>
+                    )}
                     
                     {!verificationData && (
                       <div className="flex gap-3 mt-4">
@@ -199,7 +237,15 @@ export default function PrescriptionUpload() {
                     </div>
                   )}
                   {verificationData.medicines?.map((med, i) => (
-                    <div key={i} className={`p-4 rounded-xl border ${getConfidenceColor(med.confidence)}`}>
+                    <div 
+                      key={i} 
+                      className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                        activeBboxIndex === i ? 'border-primary-500 bg-primary-500/10 shadow-[0_0_10px_rgba(56,189,248,0.2)]' : getConfidenceColor(med.confidence)
+                      }`}
+                      onClick={() => setActiveBboxIndex(i)}
+                      onMouseEnter={() => setActiveBboxIndex(i)}
+                      onMouseLeave={() => setActiveBboxIndex(null)}
+                    >
                       <div className="flex justify-between items-start mb-1">
                         <label className="block text-xs font-medium text-dark-400">Medicine Name</label>
                         {med.confidence !== undefined && (

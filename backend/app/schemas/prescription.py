@@ -27,6 +27,7 @@ class MedicineExtracted(BaseModel):
     duration_days: Optional[int] = None
     special_instructions: Optional[str] = None
     confidence: Optional[float] = None
+    bbox: Optional[List[int]] = None
     warnings: List[str] = Field(default_factory=list)
 
 
@@ -70,6 +71,8 @@ class PrescriptionMedicineResponse(BaseModel):
     timing: Optional[str] = None
     duration_days: Optional[int] = None
     special_instructions: Optional[str] = None
+    confidence: Optional[float] = None
+    bbox: Optional[List[int]] = None
     created_at: datetime
 
 
@@ -118,7 +121,9 @@ class PrescriptionResponse(BaseModel):
                 "timing": m.get("timing"),
                 "duration": str(m.get("duration_days")) if m.get("duration_days") is not None else (m.get("duration") or ""),
                 "instructions": m.get("special_instructions") or m.get("instructions") or "",
-                "type": m.get("type") or ""
+                "type": m.get("type") or "",
+                "confidence": m.get("confidence"),
+                "bbox": m.get("bbox")
             })
             
         return {

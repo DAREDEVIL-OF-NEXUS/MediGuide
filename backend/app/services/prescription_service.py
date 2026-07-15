@@ -283,6 +283,8 @@ async def verify_prescription(
             timing=med.timing,
             duration_days=med.duration_days,
             special_instructions=med.special_instructions,
+            confidence=med.confidence,
+            bbox=med.bbox
         )
         db.add(pm)
 

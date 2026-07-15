@@ -8,32 +8,61 @@ from __future__ import annotations
 
 from typing import AsyncGenerator
 
+import socket
+import urllib.parse
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
+    AsyncEngine,
 )
 from sqlalchemy.orm import DeclarativeBase
-
 from app.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Engine — connection pool config (conditional on DB type)
+# Fallback logic
 # ---------------------------------------------------------------------------
-connect_args = {}
-if settings.database_url.startswith("postgresql"):
-    connect_args.update({
-        "pool_size": 20,
-        "max_overflow": 10,
-        "pool_pre_ping": True,
-    })
+def _is_port_open(host: str, port: int, timeout: float = 1.0) -> bool:
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
 
-engine = create_async_engine(
-    settings.database_url,
-    echo=settings.debug,
-    future=True,
-    **connect_args
-)
+def _get_engine() -> AsyncEngine:
+    db_url = settings.database_url
+    
+    if settings.use_sqlite_fallback and db_url.startswith("postgresql"):
+        parsed = urllib.parse.urlparse(db_url)
+        host = parsed.hostname or "localhost"
+        port = parsed.port or 5432
+        
+        if not _is_port_open(host, port):
+            logger.warning("PostgreSQL unreachable at %s:%s. Falling back to SQLite.", host, port)
+            db_url = "sqlite+aiosqlite:///./mediguide_fallback.db"
+
+    connect_args = {}
+    if db_url.startswith("postgresql"):
+        connect_args.update({
+            "pool_size": 20,
+            "max_overflow": 10,
+            "pool_pre_ping": True,
+        })
+    elif db_url.startswith("sqlite"):
+        # SQLite needs this to allow multiple async access
+        connect_args.update({"check_same_thread": False})
+
+    return create_async_engine(
+        db_url,
+        echo=settings.debug,
+        future=True,
+        **connect_args
+    )
+
+engine = _get_engine()
 
 # ---------------------------------------------------------------------------
 # Session factory

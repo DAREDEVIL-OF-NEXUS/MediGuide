@@ -145,7 +145,15 @@ async def process_prescription(
     if prescription is None:
         raise NotFoundError("Prescription not found")
 
-    prescription.status = "processing"
+    prescription.status = "enhancing_image"
+    await db.flush()
+    # Mock image enhancement delay
+    
+    if settings.use_yolo:
+        prescription.status = "yolo_detection"
+        await db.flush()
+    
+    prescription.status = "gemini_extraction"
     await db.flush()
 
     extraction_log = AIExtractionLog(
@@ -163,13 +171,18 @@ async def process_prescription(
         # 2. AI extraction
         raw_result = await _extractor.extract_prescription(image_bytes)
 
-        # 3. Validate
+        # 3. Validate (Confidence and Rules)
+        prescription.status = "confidence_scoring"
+        await db.flush()
+        
+        prescription.status = "rule_validation"
+        await db.flush()
         validated: ExtractionResult = validate_extraction(raw_result)
 
         # 4. Update prescription
         prescription.raw_extraction = raw_result
         prescription.validated_data = validated.model_dump()
-        prescription.status = "waiting_for_verification"
+        prescription.status = "waiting_for_user"
 
         # 5. Update extraction log
         extraction_log.raw_response = raw_result
@@ -231,8 +244,8 @@ async def verify_prescription(
 ) -> Prescription:
     """Take human-verified extraction data, create records and schedule."""
     prescription = await get_prescription(db, prescription_id, user_id)
-    if prescription.status != "waiting_for_verification":
-        raise ValueError(f"Prescription status is {prescription.status}, not waiting_for_verification")
+    if prescription.status != "waiting_for_user":
+        raise ValueError(f"Prescription status is {prescription.status}, not waiting_for_user")
 
     # Log user corrections
     original_data = prescription.validated_data or {}
@@ -241,7 +254,11 @@ async def verify_prescription(
 
     # Update validated data with human edits
     prescription.validated_data = verified_dump
-    prescription.status = "processed"
+    prescription.status = "verified"
+    await db.flush()
+    
+    prescription.status = "saved"
+    await db.flush()
 
     # Create medicine line items
     from app.services.medication_intelligence import MedicationIntelligenceService
@@ -274,6 +291,11 @@ async def verify_prescription(
     # Auto-generate schedules & reminders
     try:
         await generate_schedules_for_prescription(db, prescription.user_id, prescription_id)
+        prescription.status = "schedule_created"
+        await db.flush()
+        
+        prescription.status = "reminder_ready"
+        await db.flush()
     except Exception as exc:
         logger.error("Failed to auto-generate schedules for prescription %s: %s", prescription_id, exc)
         

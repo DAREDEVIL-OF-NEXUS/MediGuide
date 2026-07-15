@@ -59,6 +59,18 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = False
 
+    # Feature Flags
+    use_gemini: bool = True
+    use_yolo: bool = False
+    use_rule_engine: bool = True
+    use_local_alarm: bool = True
+    use_email_reminders: bool = False
+    use_sqlite_fallback: bool = True
+    use_ai_assistant: bool = True
+    use_medicine_library: bool = True
+    use_rag: bool = False
+    use_ollama: bool = False
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: str | List[str]) -> List[str]:

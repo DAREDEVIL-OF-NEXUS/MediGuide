@@ -22,6 +22,7 @@ from app.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import register_middleware, setup_logging
 from app.routers import auth, prescriptions, medications, medical_history, reminders, assistant, medicines
+from app.scheduler import start_scheduler
 
 # ---------------------------------------------------------------------------
 # Logging (must be first so other modules' loggers pick up the config)
@@ -37,6 +38,16 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 # ---------------------------------------------------------------------------
 # Application factory
 # ---------------------------------------------------------------------------
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    if settings.use_local_alarm or settings.use_email_reminders:
+        start_scheduler()
+    logger.info("%s v%s starting up…", settings.app_name, settings.app_version)
+    yield
+    # Shutdown
+    logger.info("%s shutting down…", settings.app_name)
+
 app = FastAPI(
     title=settings.app_name,
     description=(
@@ -47,6 +58,7 @@ app = FastAPI(
     docs_url="/api/v1/docs",
     redoc_url="/api/v1/redoc",
     openapi_url="/api/v1/openapi.json",
+    lifespan=lifespan,
 )
 
 # -- State needed by slowapi -----------------------------------------------

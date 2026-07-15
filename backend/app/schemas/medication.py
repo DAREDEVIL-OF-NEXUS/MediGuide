@@ -83,3 +83,5 @@ class AdherenceStatsResponse(BaseModel):
     total_scheduled: int
     total_taken: int
     adherence_rate: float = Field(..., description="Adherence rate percentage (0.0 to 100.0)")
+    streak_days: int = 0
+    badges: list[str] = Field(default_factory=list)

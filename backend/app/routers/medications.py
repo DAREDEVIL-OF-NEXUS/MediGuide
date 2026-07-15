@@ -240,8 +240,23 @@ async def get_adherence(
     # 4. Adherence rate percentage calculation
     rate = (total_taken / total_scheduled * 100.0) if total_scheduled > 0 else 100.0
 
+    # 5. Calculate Streaks & Badges (Phase 4 Gamification)
+    # Simple logic: for every 3 taken doses, user gets a streak.
+    # Badges are awarded based on adherence thresholds.
+    streak_days = total_taken // 3
+    badges = []
+    
+    if rate >= 90:
+        badges.append("Consistency Champion 🏆")
+    if rate >= 70:
+        badges.append("On Track ✅")
+    if total_taken >= 10:
+        badges.append("10 Doses Milestone 🌟")
+
     return AdherenceStatsResponse(
         total_scheduled=total_scheduled,
         total_taken=total_taken,
         adherence_rate=round(rate, 1),
+        streak_days=streak_days,
+        badges=badges
     )

@@ -72,6 +72,8 @@ export default function Dashboard() {
     activeMeds: 0,
     todayDoses: 0,
     adherence: 0,
+    streak: 0,
+    badges: [],
   });
 
   useEffect(() => {
@@ -114,12 +116,16 @@ export default function Dashboard() {
         setTodaySchedule(scheduleData);
 
         const realAdherence = adherenceRes.data?.adherence_rate ?? 0;
+        const streakDays = adherenceRes.data?.streak_days ?? 0;
+        const userBadges = adherenceRes.data?.badges ?? [];
 
         setStats({
           total,
           activeMeds,
           todayDoses: scheduleData.length,
           adherence: realAdherence,
+          streak: streakDays,
+          badges: userBadges,
         });
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
@@ -203,8 +209,8 @@ export default function Dashboard() {
         >
           <StatCard icon={FileText} label="Total Prescriptions" value={stats.total} color="emerald" />
           <StatCard icon={Pill} label="Active Medications" value={stats.activeMeds} color="cyan" />
-          <StatCard icon={CalendarCheck} label="Today's Doses" value={stats.todayDoses} color="amber" />
           <StatCard icon={TrendingUp} label="Adherence Rate" value={`${stats.adherence}%`} color="violet" />
+          <StatCard icon={Sparkles} label="Current Streak (Days)" value={stats.streak} color="amber" />
         </motion.div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -343,6 +349,25 @@ export default function Dashboard() {
                           <p className="text-xs text-rose-400/80 truncate">Missed at {formatTime(dose.scheduled_time)}</p>
                         </div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Gamification / Badges */}
+            {stats.badges && stats.badges.length > 0 && (
+              <div className="glass-card p-5 border-amber-500/20">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                    <Sparkles className="w-4.5 h-4.5 text-amber-400" />
+                    Achievements
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {stats.badges.map((badge, idx) => (
+                    <div key={idx} className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
+                      {badge}
                     </div>
                   ))}
                 </div>

@@ -28,6 +28,7 @@ const navItems = [
   { to: '/history', icon: Activity, labelKey: 'nav.medical_history' },
   { to: '/medicines', icon: BookOpen, labelKey: 'nav.medicine_library' },
   { to: '/assistant', icon: Bot, labelKey: 'nav.ai_assistant' },
+  { to: '/meditriage', icon: Activity, labelKey: 'nav.meditriage' },
   { to: '/emergency', icon: PhoneCall, labelKey: 'nav.emergency' },
 ];
 

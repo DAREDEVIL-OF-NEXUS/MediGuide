@@ -18,6 +18,7 @@ import About from './pages/About';
 import Architecture from './pages/Architecture';
 import Emergency from './pages/Emergency';
 import MediTriage from './pages/MediTriage';
+import Settings from './pages/Settings';
 
 export default function App() {
   return (
@@ -74,6 +75,7 @@ export default function App() {
             <Route path="medicines" element={<MedicineLibrary />} />
             <Route path="emergency" element={<Emergency />} />
             <Route path="meditriage" element={<MediTriage />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
 
           {/* Fallback Catch-All */}

@@ -16,6 +16,7 @@ import {
   BookOpen,
   PhoneCall,
   Languages,
+  Settings as SettingsIcon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +31,7 @@ const navItems = [
   { to: '/assistant', icon: Bot, labelKey: 'nav.ai_assistant' },
   { to: '/meditriage', icon: Activity, labelKey: 'nav.meditriage' },
   { to: '/emergency', icon: PhoneCall, labelKey: 'nav.emergency' },
+  { to: '/settings', icon: SettingsIcon, labelKey: 'Settings' },
 ];
 
 function NavItem({ to, icon: Icon, label, comingSoon, collapsed, onClick }) {

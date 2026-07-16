@@ -32,6 +32,7 @@ from app.routers import (
     reminders,
     schedules,
     meditriage,
+    settings as settings_router,
 )
 from app.scheduler import start_scheduler
 
@@ -102,6 +103,7 @@ app.include_router(assistant.router)
 app.include_router(medicines.router)
 app.include_router(analytics.router)
 app.include_router(meditriage.router, prefix=API_PREFIX)
+app.include_router(settings_router.router, prefix=API_PREFIX)
 
 # Mount local uploads static directory
 os.makedirs("app/static/uploads", exist_ok=True)

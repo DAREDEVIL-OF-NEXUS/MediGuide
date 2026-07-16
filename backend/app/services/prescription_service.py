@@ -139,7 +139,7 @@ async def process_prescription(
         or ``"failed"``.
     """
     result = await db.execute(
-        select(Prescription).where(Prescription.id == prescription_id)
+        select(Prescription).options(selectinload(Prescription.user)).where(Prescription.id == prescription_id)
     )
     prescription = result.scalar_one_or_none()
     if prescription is None:
@@ -177,7 +177,9 @@ async def process_prescription(
         
         prescription.status = "rule_validation"
         await db.flush()
-        validated: ExtractionResult = validate_extraction(raw_result)
+        
+        user_allergies = prescription.user.allergies if prescription.user else []
+        validated: ExtractionResult = validate_extraction(raw_result, user_allergies)
 
         # 4. Update prescription
         prescription.raw_extraction = raw_result

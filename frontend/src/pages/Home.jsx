@@ -76,9 +76,9 @@ const featureData = [
   { icon: Bell,        color: 'text-rose-400',    border: 'hover:border-rose-500/50',  glow: 'group-hover:shadow-rose-500/10',   title: 'Smart Medication Reminders',  desc: 'Email notifications + local browser alarms so you never miss a single dose, day or night.' },
   { icon: Database,    color: 'text-violet-400',  border: 'hover:border-violet-500/50',glow: 'group-hover:shadow-violet-500/10', title: 'RAG Medical Assistant',       desc: 'ChromaDB vector search fused with OpenFDA for verified, context-aware drug interaction answers.' },
   { icon: Eye,         color: 'text-amber-400',   border: 'hover:border-amber-500/50', glow: 'group-hover:shadow-amber-500/10',  title: 'Explainable AI',             desc: 'Bounding boxes, confidence scores & transparent reasoning — see exactly what the AI sees.' },
-  { icon: BookOpen,    color: 'text-cyan-400',    border: 'hover:border-cyan-500/50',  glow: 'group-hover:shadow-cyan-500/10',   title: 'Medicine Library',            desc: 'Search a verified drug database with dosage guidelines, side effects, and interaction warnings.' },
-  { icon: Clock,       color: 'text-emerald-400', border: 'hover:border-emerald-500/50',glow: 'group-hover:shadow-emerald-500/10',title: 'Prescription Management',    desc: 'Upload, track, and browse full prescription history — all in a beautifully organized timeline.' },
-  { icon: Container,   color: 'text-sky-400',     border: 'hover:border-sky-500/50',   glow: 'group-hover:shadow-sky-500/10',    title: 'Docker Deployment',          desc: 'One-command Docker Compose for production-ready deployment with Redis, Celery & PostgreSQL.' },
+  { icon: BookOpen,    color: 'text-cyan-400',    border: 'hover:border-cyan-500/50',  glow: 'group-hover:shadow-cyan-500/10',   title: 'Medicine Library & Triage',            desc: 'Search a verified drug database and predict diseases using our integrated MediTriage engine.' },
+  { icon: Shield,      color: 'text-indigo-400',  border: 'hover:border-indigo-500/50',glow: 'group-hover:shadow-indigo-500/10', title: 'Medication Safety', desc: 'Automatic duplicate detection, allergy checking, and adherence tracking for maximum patient safety.' },
+  { icon: Zap,         color: 'text-sky-400',     border: 'hover:border-sky-500/50',   glow: 'group-hover:shadow-sky-500/10',    title: 'Offline AI Integration',          desc: 'Seamlessly switch to local Ollama (Llama 3.3 & LLaVA) models for environments without internet access.' },
 ];
 
 function FeatureCard({ icon: Icon, color, border, glow, title, desc, index }) {

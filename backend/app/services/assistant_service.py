@@ -20,6 +20,7 @@ from app.config import settings
 from app.models.prescription import Prescription
 from app.schemas.assistant import ChatMessage
 from app.services.rag_service import rag_service
+from app.ai.ollama_client import ollama_client
 
 logger = logging.getLogger(__name__)
 
@@ -85,18 +86,33 @@ Guidelines:
             )
         )
 
-        # 4. Generate content from Gemini
+        # 4. Generate content from Gemini or Ollama
         try:
-            response = self._client.models.generate_content(
-                model=self.MODEL_NAME,
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    temperature=0.7,
-                    max_output_tokens=2048,
-                ),
-            )
-            reply = response.text or "I apologize, but I was unable to generate a response. Please try again."
+            if settings.use_offline_ai:
+                prompt_text = ""
+                if conversation_history:
+                    for msg in conversation_history:
+                        prompt_text += f"{msg.role.capitalize()}: {msg.content}\n"
+                prompt_text += f"User: {message}\nAssistant:"
+                
+                reply = await ollama_client.generate_text(
+                    model="llama3.3",
+                    prompt=prompt_text,
+                    system=system_prompt
+                )
+                if not reply:
+                    reply = "I apologize, but I was unable to generate a response from the offline AI. Please try again."
+            else:
+                response = self._client.models.generate_content(
+                    model=self.MODEL_NAME,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_prompt,
+                        temperature=0.7,
+                        max_output_tokens=2048,
+                    ),
+                )
+                reply = response.text or "I apologize, but I was unable to generate a response. Please try again."
         except Exception as exc:
             logger.error("Failed to generate response from Gemini: %s", exc)
             reply = (

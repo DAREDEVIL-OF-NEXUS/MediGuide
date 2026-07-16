@@ -20,6 +20,7 @@ from app.ai.preprocessing import preprocess_image
 from app.ai.prompts import PRESCRIPTION_EXTRACTION_PROMPT
 from app.config import settings
 from app.core.exceptions import AIExtractionError
+from app.ai.ollama_client import ollama_client
 
 logger = logging.getLogger(__name__)
 
@@ -67,30 +68,39 @@ class GeminiExtractor:
         for attempt in range(1, max_retries + 1):
             try:
                 logger.info("Attempting Gemini extraction (attempt %d/%d)...", attempt, max_retries)
-                response = self._client.models.generate_content(
-                    model=self.MODEL_NAME,
-                    contents=[
-                        types.Content(
-                            role="user",
-                            parts=[
-                                types.Part.from_bytes(
-                                    data=processed,
-                                    mime_type="image/jpeg",
-                                ),
-                                types.Part.from_text(
-                                    text=PRESCRIPTION_EXTRACTION_PROMPT
-                                ),
-                            ],
-                        )
-                    ],
-                    config=types.GenerateContentConfig(
-                        temperature=0.1,
-                        max_output_tokens=4096,
-                        response_mime_type="application/json",
-                    ),
-                )
-                
-                raw_text = response.text or ""
+                if settings.use_offline_ai:
+                    logger.info("Using offline AI (LLaVA) for extraction.")
+                    # LLaVA typically doesn't support JSON schema enforcement natively via the same API,
+                    # but we can instruct it in the prompt and parse its output.
+                    raw_text = await ollama_client.analyze_image(
+                        model="llava",
+                        prompt=PRESCRIPTION_EXTRACTION_PROMPT,
+                        image_bytes=processed
+                    )
+                else:
+                    response = self._client.models.generate_content(
+                        model=self.MODEL_NAME,
+                        contents=[
+                            types.Content(
+                                role="user",
+                                parts=[
+                                    types.Part.from_bytes(
+                                        data=processed,
+                                        mime_type="image/jpeg",
+                                    ),
+                                    types.Part.from_text(
+                                        text=PRESCRIPTION_EXTRACTION_PROMPT
+                                    ),
+                                ],
+                            )
+                        ],
+                        config=types.GenerateContentConfig(
+                            temperature=0.1,
+                            max_output_tokens=4096,
+                            response_mime_type="application/json",
+                        ),
+                    )
+                    raw_text = response.text or ""
                 parsed = self._parse_response(raw_text)
                 
                 elapsed_ms = (time.perf_counter() - start) * 1000

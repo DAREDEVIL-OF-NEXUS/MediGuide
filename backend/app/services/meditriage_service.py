@@ -5,6 +5,7 @@ from app.ai.meditriage.model import meditriage_engine
 from app.config import settings
 from google import genai
 from google.genai import types
+from app.ai.ollama_client import ollama_client
 
 logger = logging.getLogger(__name__)
 
@@ -51,17 +52,26 @@ class MediTriageService:
             logger.warning(f"Local ML Prediction failed: {e}. Falling back to Gemini.")
             used_fallback = True
             
-        # Gemini Fallback for Prediction
-        if used_fallback and self._client:
+        # Gemini/Ollama Fallback for Prediction
+        if used_fallback and (self._client or settings.use_offline_ai):
             try:
-                logger.info("Using Gemini fallback for disease prediction.")
+                logger.info("Using AI fallback for disease prediction.")
                 fallback_prompt = f"A patient has the following symptoms: {', '.join(symptoms)}. Based on medical knowledge, what is the single most likely disease? Reply with ONLY the disease name, nothing else."
-                fallback_response = self._client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=[types.Part.from_text(text=fallback_prompt)],
-                    config=types.GenerateContentConfig(temperature=0.1, max_output_tokens=20),
-                )
-                disease_name = fallback_response.text.strip().replace('.', '')
+                
+                if settings.use_offline_ai:
+                    response_text = await ollama_client.generate_text(
+                        model="llama3.3",
+                        prompt=fallback_prompt
+                    )
+                else:
+                    fallback_response = self._client.models.generate_content(
+                        model="gemini-2.5-flash",
+                        contents=[types.Part.from_text(text=fallback_prompt)],
+                        config=types.GenerateContentConfig(temperature=0.1, max_output_tokens=20),
+                    )
+                    response_text = fallback_response.text
+                
+                disease_name = response_text.strip().replace('.', '')
                 result = {
                     "prediction": disease_name,
                     "confidence": 85.0, # Approximate high confidence for LLM fallback
@@ -79,8 +89,8 @@ class MediTriageService:
 
         explanation = "Explainability is currently unavailable."
         
-        # Add Gemini Explainability
-        if self._client:
+        # Add Explainability
+        if self._client or settings.use_offline_ai:
             try:
                 prompt = f"""
                 A patient has reported the following symptoms: {', '.join(symptoms)}.
@@ -90,17 +100,25 @@ class MediTriageService:
                 As a medical AI assistant, provide a short, patient-friendly explanation of why these symptoms align with this disease. 
                 Keep it under 3 sentences. Do not diagnose the patient, just explain the correlation.
                 """
-                response = self._client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=[types.Part.from_text(text=prompt)],
-                    config=types.GenerateContentConfig(
-                        temperature=0.3,
-                        max_output_tokens=150,
-                    ),
-                )
-                explanation = response.text.strip()
+                
+                if settings.use_offline_ai:
+                    response_text = await ollama_client.generate_text(
+                        model="llama3.3",
+                        prompt=prompt
+                    )
+                else:
+                    response = self._client.models.generate_content(
+                        model="gemini-2.5-flash",
+                        contents=[types.Part.from_text(text=prompt)],
+                        config=types.GenerateContentConfig(
+                            temperature=0.3,
+                            max_output_tokens=150,
+                        ),
+                    )
+                    response_text = response.text
+                explanation = response_text.strip()
             except Exception as e:
-                logger.error(f"Gemini explainability failed: {e}")
+                logger.error(f"AI explainability failed: {e}")
 
         result["explanation"] = explanation
         return result

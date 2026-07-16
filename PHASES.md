@@ -662,3 +662,28 @@ graph TD
 ---
 
 <p align="center"><em>Built with ‚ù§Ô∏è for better healthcare accessibility</em></p>
+
+
+<a id="phase-5-new"></a>
+
+## Phase 5 ó Medication Safety (Complete) ?
+
+> _Goal: Ensure maximum patient safety by catching duplicate medications, interactions, and tracking adherence._
+
+- **Duplicate Detection**: The Rule Engine automatically flags duplicate medicines found within a single extraction.
+- **Allergy Checking**: Injects user allergies and warns if the extracted medication name matches any known allergy.
+- **Adherence Analytics**: The /medications/adherence endpoint calculates taking percentages based on Medication Logs.
+
+---
+
+<a id="phase-6"></a>
+
+## Phase 6 ó Offline AI Integration (Complete) ?
+
+> _Goal: Allow the application to run completely locally for maximum privacy and resilience without internet._
+
+- **Ollama Integration**: Created a dedicated ollama_client to interface with localhost:11434.
+- **Local Reasoning**: Supports llama3.3 for triage predictions, explainability, and AI Assistant.
+- **Local Vision**: Supports llava for prescription layout detection and OCR without Gemini.
+- **Global Settings Toggle**: Added a centralized Settings Page UI to allow users to switch between Cloud (Gemini) and Local (Ollama) pipelines seamlessly.
+

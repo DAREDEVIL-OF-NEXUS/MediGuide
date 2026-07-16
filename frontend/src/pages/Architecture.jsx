@@ -457,6 +457,13 @@ export default function Architecture() {
               color="green"
               delay={0.4}
             />
+            <ExplanationCard
+              icon={HardDrive}
+              title="Why Offline AI?"
+              description="For maximum privacy and environments with zero connectivity, our offline toggle switches reasoning and extraction from cloud APIs to local Ollama (Llama 3.3 & LLaVA) models running entirely on your hardware."
+              color="blue"
+              delay={0.48}
+            />
           </div>
         </AnimatedSection>
 

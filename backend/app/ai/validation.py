@@ -98,11 +98,12 @@ def _calculate_confidence(
 # Public API
 # ---------------------------------------------------------------------------
 
-def validate_extraction(data: Dict[str, Any]) -> ExtractionResult:
+def validate_extraction(data: Dict[str, Any], user_allergies: Optional[List[str]] = None) -> ExtractionResult:
     """Validate and normalise an AI extraction dict.
 
     Args:
         data: Raw dict from ``GeminiExtractor.extract_prescription``.
+        user_allergies: Optional list of user's known allergies.
 
     Returns:
         A fully validated ``ExtractionResult`` schema instance.
@@ -133,6 +134,15 @@ def validate_extraction(data: Dict[str, Any]) -> ExtractionResult:
             warnings.append(f"Duplicate medicine detected: {name}")
             med_confidence -= 0.3
         seen_medicines.add(name.lower())
+
+        # Allergy check
+        if user_allergies:
+            for allergy in user_allergies:
+                if allergy.lower() in name.lower() or name.lower() in allergy.lower():
+                    msg = f"CRITICAL: Potential allergy detected between {name} and {allergy}"
+                    med_warnings.append(msg)
+                    warnings.append(msg)
+                    med_confidence -= 0.5
 
         # Dosage sanity check
         dosage_warning = _check_dosage_range(name, raw.get("dosage"))

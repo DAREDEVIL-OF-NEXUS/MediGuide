@@ -56,6 +56,16 @@ MediGuide AI is a production-grade healthcare platform that automates prescripti
 - [x] Add severity classification: Home Care, Consult Doctor, or Visit Hospital.
 - [x] Add hospital appointment links (ORS Portal, eSanjeevani, Practo).
 
+### **Phase 5: Medication Safety (Complete) ✅**
+- [x] Implement allergy checking.
+- [x] Detect duplicate medications.
+- [x] Integrate medication adherence analytics.
+
+### **Phase 6: Offline AI (Complete) ✅**
+- [x] Integrate Ollama with Llama 3.3 for text generation.
+- [x] Integrate Ollama with LLaVA for vision extraction.
+- [x] Design an offline toggle in Settings for environments without internet.
+
 ### 📚 Medicine Library
 - Comprehensive drug details: descriptions, side effects, interactions, contraindications
 - Pregnancy categories and storage instructions

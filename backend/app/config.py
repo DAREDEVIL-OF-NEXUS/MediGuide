@@ -68,8 +68,9 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = False
 
-    # Feature Flags
+    # ── Feature Flags ────────────────────────────────────────────────────
     use_gemini: bool = True
+    use_offline_ai: bool = False
     use_yolo: bool = False
     use_rule_engine: bool = True
     use_local_alarm: bool = True

@@ -54,11 +54,12 @@ export function AuthProvider({ children }) {
     return profileResponse.data;
   };
 
-  const register = async (fullName, email, password) => {
+  const register = async (fullName, email, password, emergencyContacts = []) => {
     const response = await authApi.register({
       full_name: fullName,
       email,
       password,
+      emergency_contacts: emergencyContacts,
     });
     return response.data;
   };

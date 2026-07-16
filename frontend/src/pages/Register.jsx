@@ -18,6 +18,9 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [ecName, setEcName] = useState('');
+  const [ecPhone, setEcPhone] = useState('');
+  const [ecRelation, setEcRelation] = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -47,7 +50,16 @@ export default function Register() {
 
     setIsLoading(true);
     try {
-      await register(fullName, email, password);
+      const emergencyContacts = [];
+      if (ecName && ecPhone && ecRelation) {
+        emergencyContacts.push({
+          name: ecName,
+          phone: ecPhone,
+          relationship: ecRelation
+        });
+      }
+
+      await register(fullName, email, password, emergencyContacts);
       toast.success('Account created! Please sign in.');
       navigate('/login');
     } catch (error) {
@@ -203,6 +215,48 @@ export default function Register() {
                   autoComplete="new-password"
                   required
                 />
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-dark-800">
+              <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <Heart className="w-4 h-4 text-rose-500" /> Optional: Emergency Contact
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="label">Contact Name</label>
+                  <input
+                    type="text"
+                    value={ecName}
+                    onChange={(e) => setEcName(e.target.value)}
+                    className="input-field"
+                    placeholder="E.g. Jane Doe"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">Phone</label>
+                    <input
+                      type="tel"
+                      value={ecPhone}
+                      onChange={(e) => setEcPhone(e.target.value)}
+                      className="input-field"
+                      placeholder="Phone Number"
+                    />
+                  </div>
+                  <div>
+                    <label className="label">Relationship</label>
+                    <input
+                      type="text"
+                      value={ecRelation}
+                      onChange={(e) => setEcRelation(e.target.value)}
+                      className="input-field"
+                      placeholder="E.g. Spouse"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 

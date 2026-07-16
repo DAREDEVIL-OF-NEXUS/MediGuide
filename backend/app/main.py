@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -110,6 +111,11 @@ os.makedirs("app/static/uploads", exist_ok=True)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+from fastapi.responses import RedirectResponse
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/api/v1/docs")
 
 # ---------------------------------------------------------------------------
 # Health check

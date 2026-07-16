@@ -16,6 +16,7 @@ import MedicineLibrary from './pages/MedicineLibrary';
 import Home from './pages/Home';
 import About from './pages/About';
 import Architecture from './pages/Architecture';
+import Emergency from './pages/Emergency';
 
 export default function App() {
   return (
@@ -70,6 +71,7 @@ export default function App() {
             <Route path="history" element={<MedicalHistory />} />
             <Route path="assistant" element={<AIAssistant />} />
             <Route path="medicines" element={<MedicineLibrary />} />
+            <Route path="emergency" element={<Emergency />} />
           </Route>
 
           {/* Fallback Catch-All */}

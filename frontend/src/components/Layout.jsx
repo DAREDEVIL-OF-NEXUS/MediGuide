@@ -14,6 +14,7 @@ import {
   Plus,
   Activity,
   BookOpen,
+  PhoneCall,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -25,6 +26,7 @@ const navItems = [
   { to: '/history', icon: Activity, label: 'Medical History' },
   { to: '/medicines', icon: BookOpen, label: 'Medicine Library' },
   { to: '/assistant', icon: Bot, label: 'AI Assistant' },
+  { to: '/emergency', icon: PhoneCall, label: 'Emergency' },
 ];
 
 function NavItem({ to, icon: Icon, label, comingSoon, collapsed, onClick }) {

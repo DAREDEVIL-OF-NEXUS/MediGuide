@@ -1,58 +1,56 @@
-# MediGuide AI - Final Setup & Completion Guide
+# MediGuide AI — Complete Setup Guide
 
-This document contains everything a new developer needs to set up, run, and verify the MediGuide AI project, as required for Phase 8 completion.
+> Everything a new developer needs to clone, configure, and run the full MediGuide AI stack.
 
-## 1. Environment & Requirements
+---
 
-- **Python Version:** 3.11.x
-- **Node Version:** 18.x
-- **PostgreSQL Version:** 15.x or 16.x
-- **Docker Version:** 24.0+ (Docker Desktop)
-- **Required pip packages:** `fastapi`, `uvicorn`, `sqlalchemy`, `asyncpg`, `aiosqlite`, `google-genai`, `chromadb`, `sentence-transformers`, `python-multipart`, `pydantic-settings`, `apscheduler`
-- **Required npm packages:** `react`, `react-router-dom`, `framer-motion`, `lucide-react`, `axios`, `react-dropzone`
+## 1. Prerequisites
 
-## 2. Directory Structure
+| Tool | Version | Purpose | Download |
+|------|---------|---------|----------|
+| **Python** | 3.11+ | Backend runtime | [python.org](https://www.python.org/downloads/) |
+| **Node.js** | 18+ | Frontend build | [nodejs.org](https://nodejs.org/) |
+| **PostgreSQL** | 15+ or 16+ | Primary database | [postgresql.org](https://www.postgresql.org/download/) |
+| **Docker Desktop** | 24+ | Production deployment | [docker.com](https://www.docker.com/products/docker-desktop/) |
+| **Git** | Latest | Version control | [git-scm.com](https://git-scm.com/) |
 
-```text
-MediGuide-AI/
-├── backend/
-│   ├── app/              # FastAPI application (routers, services, models)
-│   ├── data/             # Local storage (if SQLite or file uploads)
-│   ├── chroma_db/        # Persistent ChromaDB vector storage for RAG
-│   ├── requirements.txt
-│   ├── reset_db.py       # Database schema reset utility
-│   ├── .env.example
-│   └── Dockerfile
-├── frontend/
-│   ├── src/              # React application (components, pages, services)
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   └── Dockerfile
-├── docker-compose.yml    # Orchestrates frontend, backend, and PostgreSQL
-└── README.md
-```
+---
 
-## 3. Environment Variables (`backend/.env`)
+## 2. API Keys
+
+| Service | Purpose | Required? | Free Tier | How to Obtain | .env Variable |
+|---------|---------|-----------|-----------|---------------|---------------|
+| **Google Gemini** | Prescription OCR + Chatbot | **Yes** | ✅ 15 RPM | [Google AI Studio](https://aistudio.google.com/app/apikey) → Create API Key | `GEMINI_API_KEY` |
+| **OpenFDA** | Drug database queries | No | ✅ 120k/day | [OpenFDA](https://open.fda.gov/apis/authentication/) → Request key via email | `OPENFDA_API_KEY` |
+| **Gmail SMTP** | Email reminders | No | ✅ 500/day | Google Account → 2FA → [App Passwords](https://myaccount.google.com/apppasswords) | `SMTP_PASSWORD` |
+
+---
+
+## 3. Environment Variables
+
+Copy `backend/.env.example` to `backend/.env` and fill in your values:
 
 ```env
-# Database Connections
-DATABASE_URL=postgresql+asyncpg://mediguide:mediguide@db:5432/mediguide
+# Database
+DATABASE_URL=postgresql+asyncpg://mediguide:mediguide@localhost:5432/mediguide
 FALLBACK_SQLITE_URL=sqlite+aiosqlite:///./mediguide.db
-SECRET_KEY=your_secret_key
-JWT_SECRET_KEY=your_jwt_secret
 
-# APIs
-GEMINI_API_KEY=your_gemini_key
-OPENFDA_API_KEY=your_openfda_key
+# Security
+SECRET_KEY=generate-a-random-string-here
+JWT_SECRET_KEY=generate-a-random-string-here
+
+# API Keys
+GEMINI_API_KEY=your_gemini_key_here
+OPENFDA_API_KEY=your_openfda_key_here
 
 # Feature Flags
 USE_GEMINI=true
 USE_RAG=true
+USE_YOLO=true
 USE_REAL_MEDICINE_DATABASE=true
-USE_EMAIL_REMINDERS=true
+USE_EMAIL_REMINDERS=false
 
-# SMTP Setup
+# SMTP (only if USE_EMAIL_REMINDERS=true)
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=your_gmail@gmail.com
@@ -60,93 +58,120 @@ SMTP_PASSWORD=your_app_password
 SMTP_FROM_EMAIL=your_gmail@gmail.com
 ```
 
-## 4. Required Commands
+---
 
-### Local Development (Without Docker)
+## 4. Directory Structure
 
-**Backend:**
+```
+MediGuide-AI/
+├── backend/
+│   ├── app/
+│   │   ├── ai/                  # AI pipelines
+│   │   │   ├── extraction.py    # Gemini OCR
+│   │   │   ├── preprocessing.py # Image enhancement
+│   │   │   ├── prompts.py       # LLM prompt templates
+│   │   │   ├── validation.py    # Rule engine
+│   │   │   └── yolo/
+│   │   │       ├── yolo.py      # YOLO detector class
+│   │   │       └── models/
+│   │   │           └── best.pt  # Custom-trained weights
+│   │   ├── core/                # Auth, exceptions, dependencies
+│   │   ├── models/              # SQLAlchemy ORM models
+│   │   ├── routers/             # FastAPI route handlers
+│   │   ├── schemas/             # Pydantic validation schemas
+│   │   ├── services/            # Business logic layer
+│   │   ├── config.py            # Settings (loads .env)
+│   │   ├── database.py          # DB engine + session
+│   │   └── main.py              # FastAPI app entry point
+│   ├── chroma_db/               # ChromaDB vector storage
+│   ├── requirements.txt
+│   ├── reset_db.py              # DB schema reset utility
+│   ├── Dockerfile
+│   └── .env.example
+├── frontend/
+│   ├── src/
+│   │   ├── components/          # Reusable UI components
+│   │   ├── pages/               # Route pages
+│   │   ├── services/            # API client (axios)
+│   │   └── App.jsx              # Router + layout
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── vite.config.js
+│   └── tailwind.config.js
+├── docker-compose.yml
+├── README.md
+├── PHASES.md
+├── ARCHITECTURE_DECISIONS.md
+└── FINAL_SETUP.md (this file)
+```
+
+---
+
+## 5. Running Locally
+
+### Backend
 ```bash
 cd backend
 python -m venv venv
-venv\Scripts\activate      # Windows
-source venv/bin/activate   # Mac/Linux
+venv\Scripts\activate            # Windows
 pip install -r requirements.txt
-python reset_db.py         # To initialize SQLite fallback
-uvicorn app.main:app --reload
+cp .env.example .env             # Fill in your API keys
+python reset_db.py               # Create database tables
+uvicorn app.main:app --reload    # Starts on http://localhost:8000
 ```
 
-**Frontend:**
+### Frontend
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev                      # Starts on http://localhost:5173
 ```
 
-### Production Deployment (With Docker)
+---
+
+## 6. Running with Docker
 
 ```bash
-# Build and run detached
+# Build and start all services
 docker-compose up --build -d
 
 # View logs
 docker-compose logs -f
 
-# Shut down
+# Stop services
 docker-compose down
+
+# Access
+# Frontend:  http://localhost:5173
+# Backend:   http://localhost:8000/docs
 ```
-
-## 5. API Keys Required
-
-| Service | Purpose | Required? | Free Tier? | Website | How to Obtain | .env Variable | Rate Limits |
-|---|---|---|---|---|---|---|---|
-| **Google Gemini** | Prescription OCR, JSON extraction, Assistant Chat | **Yes** | Yes | [Google AI Studio](https://aistudio.google.com/) | Sign in, generate API key. | `GEMINI_API_KEY` | 15 RPM (Free tier) |
-| **OpenFDA** | Medicine details, warnings, active ingredients | No | Yes | [OpenFDA](https://open.fda.gov/apis/authentication/) | Sign up for API key. | `OPENFDA_API_KEY` | 120,000/day (with key) |
-| **Gmail SMTP** | Sending user medication reminders via email | No | Yes | [Google Account Security](https://myaccount.google.com/) | Enable 2FA -> Create App Password | `SMTP_PASSWORD` | 500 emails/day |
-
-## 6. Manual Downloads Checklist
-
-If you are setting up the environment from absolute scratch on a new machine:
-
-1. **Docker Desktop:**
-   - *Why:* To run the entire stack effortlessly using `docker-compose`.
-   - *Download:* [docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
-   - *Install:* Run the installer and ensure the Docker daemon is running in your taskbar.
-2. **YOLOv8 Weights (`best.pt`):**
-   - *Why:* The pipeline expects a fine-tuned layout detection model.
-   - *Where to place:* `backend/app/ai/yolo/models/best.pt`
-   - *Dataset/Classes Expected:* `[0: 'doctor_info', 1: 'patient_info', 2: 'medicine_block']`
-   - *Fallback:* If not placed, the system gracefully falls back to sending the full image directly to Gemini.
-3. **Python 3.11+:**
-   - *Why:* Backend runtime.
-   - *Download:* [python.org/downloads](https://www.python.org/downloads/)
-4. **Node.js 18+:**
-   - *Why:* Frontend build/runtime.
-   - *Download:* [nodejs.org](https://nodejs.org/)
-
-## 7. YOLO Integration Audit & Instructions
-
-The YOLO pipeline inside `backend/app/ai/yolo.py` has been fully audited.
-- **Expected Model Location:** `backend/app/ai/yolo/models/best.pt`
-- **Expected Ultralytics Version:** `ultralytics>=8.0.0`
-- **Expected Image Size:** Standard YOLO input sizes (e.g. 640x640) - the code automatically decodes via OpenCV.
-- **How to enable:** Simply place `best.pt` in the `models` directory. The detector automatically activates and extracts bounding boxes mapped with confidences. If absent, it logs a graceful fallback.
 
 ---
 
-## 8. Complete End-to-End Verification Trace
+## 7. YOLO Model Setup
 
-The entire pipeline was tested against the source code:
+The custom YOLOv8 model was trained on a [Roboflow medical prescription dataset](https://universe.roboflow.com/medicalprescription/medical-prescription-hkxmd-5pkrh).
 
-| Stage | Status | Notes |
-|---|---|---|
-| Login / Auth | **PASS** | JWT tokens secure the routes. |
-| Upload Prescription | **PASS** | Dropzone UI accepts and posts the image. |
-| Image Processing / YOLO | **PASS** | Fallback behaves gracefully without `best.pt`. |
-| Gemini OCR Extraction | **PASS** | Bounding boxes & confidence prompted via JSON Schema. |
-| Verification (Explainable AI) | **PASS** | Bounding boxes overlay correctly on the UI. |
-| OpenFDA Database Cache | **PASS** | Service securely lazy-loads missing drug facts. |
-| ChromaDB | **PASS** | Embedding vectors persist locally. |
-| Medicine Library UI | **PASS** | Reflects detailed facts directly from RAG. |
-| AI Assistant Chat | **PASS** | Queries ChromaDB for context before replying. |
-| Reminder Scheduling | **PASS** | APScheduler processes crons based on dosage timing. |
-| Email Reminders | **PASS** | Standard library `smtplib` successfully implemented. |
+- **Expected file:** `backend/app/ai/yolo/models/best.pt`
+- **Ultralytics version:** `>=8.0.0`
+- **Image size:** 640×640
+- **Fallback:** If `best.pt` is absent, the system sends the full image to Gemini directly
+
+To retrain:
+1. Open [Google Colab](https://colab.research.google.com/)
+2. Enable GPU runtime (Runtime → Change runtime type → T4 GPU)
+3. Download dataset from Roboflow and train with `ultralytics`
+4. Copy `runs/detect/train/weights/best.pt` to the location above
+
+---
+
+## 8. Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `ModuleNotFoundError: aiosqlite` | Run `pip install aiosqlite` |
+| PostgreSQL connection refused | Ensure PostgreSQL is running; or set `USE_SQLITE_FALLBACK=true` |
+| Gemini API errors | Check `GEMINI_API_KEY` is valid; check rate limits (15 RPM free tier) |
+| YOLO not loading | Verify `best.pt` exists at `backend/app/ai/yolo/models/best.pt` |
+| Email not sending | Enable 2FA on Google Account; generate App Password |
+| Docker build fails | Ensure Docker Desktop is running; check `.dockerignore` files |

@@ -12,7 +12,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { medicalHistory } from '../services/api';
+import { medicalHistory, prescriptions } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function MedicalHistory() {
@@ -30,11 +30,25 @@ export default function MedicalHistory() {
   const fetchHistory = async () => {
     try {
       setLoading(true);
-      const response = await medicalHistory.list();
-      setRecords(response.data || []);
+      const [historyRes, rxRes] = await Promise.all([
+        medicalHistory.list(),
+        prescriptions.list()
+      ]);
+      
+      const conditions = (historyRes.data || []).map(r => ({ ...r, type: 'condition' }));
+      const rxs = (rxRes.data?.items || []).map(r => ({ ...r, type: 'prescription' }));
+      
+      // Sort combined timeline by date
+      const combined = [...conditions, ...rxs].sort((a, b) => {
+        const dateA = new Date(a.diagnosed_date || a.prescription_date || a.created_at);
+        const dateB = new Date(b.diagnosed_date || b.prescription_date || b.created_at);
+        return dateB - dateA;
+      });
+      
+      setRecords(combined);
     } catch (error) {
-      console.error('Failed to load medical history:', error);
-      toast.error('Failed to load medical history records.');
+      console.error('Failed to load timeline:', error);
+      toast.error('Failed to load medical records.');
     } finally {
       setLoading(false);
     }
@@ -62,7 +76,14 @@ export default function MedicalHistory() {
       };
 
       const response = await medicalHistory.create(payload);
-      setRecords(prev => [response.data, ...prev]);
+      setRecords(prev => {
+        const newRecord = { ...response.data, type: 'condition' };
+        return [newRecord, ...prev].sort((a, b) => {
+          const dateA = new Date(a.diagnosed_date || a.prescription_date || a.created_at);
+          const dateB = new Date(b.diagnosed_date || b.prescription_date || b.created_at);
+          return dateB - dateA;
+        });
+      });
       toast.success('Medical history record added!');
       
       // Reset Form
@@ -261,9 +282,53 @@ export default function MedicalHistory() {
             </div>
           ) : (
             <div className="space-y-4">
-              {records.map((record) => (
+              {records.map((record) => {
+                if (record.type === 'prescription') {
+                  return (
+                    <div
+                      key={`rx-${record.id}`}
+                      className="glass-card p-5 relative border border-indigo-500/10 transition-all hover:bg-dark-800/10"
+                    >
+                      <div className="space-y-3 pr-8">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <h4 className="font-bold text-white text-base md:text-lg">
+                            Prescription Visit
+                          </h4>
+                          <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                            <Activity className="w-3 h-3" /> Rx
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-xs text-dark-400 flex-wrap">
+                          {record.prescription_date && (
+                            <span className="flex items-center gap-1 font-mono">
+                              <Calendar className="w-3.5 h-3.5" /> Date: {new Date(record.prescription_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                            </span>
+                          )}
+                          {record.doctor && (
+                            <span className="flex items-center gap-1 font-mono">
+                              <Heart className="w-3.5 h-3.5" /> Dr. {record.doctor.name} {record.doctor.clinic_name ? `(${record.doctor.clinic_name})` : ''}
+                            </span>
+                          )}
+                        </div>
+
+                        {record.raw_extraction?.diagnosis && (
+                          <div className="p-3.5 rounded-xl bg-dark-900/60 border border-dark-700/30 text-xs text-dark-300 leading-relaxed flex items-start gap-2">
+                            <BookOpen className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <strong className="text-dark-200 block mb-0.5 font-medium">Diagnosis:</strong>
+                              {record.raw_extraction.diagnosis}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
                 <div
-                  key={record.id}
+                  key={`cond-${record.id}`}
                   className={`
                     glass-card p-5 relative border transition-all hover:bg-dark-800/10
                     ${record.is_active ? 'border-primary-500/10' : 'border-dark-800 opacity-70'}
@@ -317,7 +382,7 @@ export default function MedicalHistory() {
                     )}
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           )}
         </div>

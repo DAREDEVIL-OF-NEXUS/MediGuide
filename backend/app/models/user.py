@@ -54,6 +54,9 @@ class User(Base):
     chronic_conditions: Mapped[list] = mapped_column(
         JSON, default=list, server_default="[]"
     )
+    emergency_contacts: Mapped[list] = mapped_column(
+        JSON, default=list, server_default="[]"
+    )
 
     # ── Flags ────────────────────────────────────────────────────────────
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="t")

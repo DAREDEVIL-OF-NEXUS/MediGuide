@@ -581,8 +581,11 @@ We added labeled metric suffixes (e.g., "(Verified)") to the frontend statistics
 ### 4. MediTriage ML & LLM Architecture
 **Decision:** Did not migrate legacy Flask backends. Rebuilt as a FastAPI service. Used the `RandomForestClassifier` from Repo 2 for baseline prediction accuracy.
 **Rationale:** Legacy code violated SOLID principles.
-**Decision 2:** Added Google Gemini LLM as a fallback layer.
-**Rationale:** If the Scikit-learn Random Forest model outputs a confidence score <40%, or if the model crashes, the system dynamically queries Gemini using the symptoms array to guarantee an explainable medical prediction without breaking the app.
+### 5. Phase 4 - Medical Management & Escalation
+**Decision:** Store `emergency_contacts` as a JSON array of Pydantic models on the `User` table rather than creating a separate SQL table.
+**Rationale:** Emergency contacts belong strictly to a user profile and don't need complex relations. JSON arrays allow flexibility.
+**Decision 2:** Escalation threshold for missed doses is handled gracefully in the `reminder_service.py` scheduled job (2 hour threshold) using the `Notification` table to prevent spamming the guardian.
+**Rationale:** Re-uses the existing notification tracking logic without needing a complex state machine.
 
 ### Options Considered
 

@@ -94,6 +94,8 @@ from app.models.notification import Notification
 from app.models.prescription import PrescriptionMedicine
 from app.models.reminder import Reminder
 from app.models.schedule import MedicationSchedule
+from app.models.user import User
+from app.models.medication_log import MedicationLog
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +183,63 @@ async def dispatch_due_reminders(db: AsyncSession) -> int:
             dispatched_count += 1
 
     if dispatched_count > 0:
+        await db.flush()
+
+    # --- Phase 4: Escalating Missed-Dose Notifications to Guardian ---
+    # Find reminders that were due more than 2 hours ago today and have no "taken" log
+    missed_count = 0
+    missed_threshold_hours = 2
+
+    for rem, sched, pm in rows:
+        reminder_datetime = datetime.combine(today_date, rem.reminder_time)
+        time_diff = now_dt - reminder_datetime
+
+        if time_diff > timedelta(hours=missed_threshold_hours):
+            # Check if user took the medication
+            log_stmt = select(MedicationLog).where(
+                MedicationLog.schedule_id == sched.id,
+                MedicationLog.log_date == today_date,
+                MedicationLog.scheduled_time == rem.reminder_time,
+                MedicationLog.status == "taken"
+            )
+            log_res = await db.execute(log_stmt)
+            if log_res.scalars().all():
+                continue # User took it
+
+            # Check if we already alerted the guardian today
+            alert_stmt = select(Notification).where(
+                Notification.reminder_id == rem.id,
+                Notification.type == "guardian_alert",
+                func.date(Notification.created_at) == today_date,
+            )
+            alert_res = await db.execute(alert_stmt)
+            if alert_res.scalars().all():
+                continue # Already alerted
+
+            # Needs guardian alert
+            guardian_notification = Notification(
+                user_id=sched.user_id,
+                reminder_id=rem.id,
+                type="guardian_alert",
+                title="URGENT: Missed Medication Alert",
+                body=(
+                    f"Your dependent {getattr(sched.user, 'full_name', 'Patient')} has missed their dose of "
+                    f"{pm.medicine_name} scheduled for {rem.reminder_time.strftime('%I:%M %p')}. "
+                    "Please check in with them to ensure they take their medication."
+                ),
+                status="sent",
+            )
+            db.add(guardian_notification)
+
+            if getattr(sched.user, 'emergency_contacts', None):
+                for contact in sched.user.emergency_contacts:
+                    if contact.get('email'):
+                        send_email_reminder(contact['email'], guardian_notification.title, guardian_notification.body)
+                        logger.info(f"Escalated missed dose of {pm.medicine_name} to guardian: {contact['email']}")
+            
+            missed_count += 1
+
+    if missed_count > 0:
         await db.flush()
 
     return dispatched_count

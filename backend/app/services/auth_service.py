@@ -44,6 +44,7 @@ async def register_user(db: AsyncSession, data: UserRegister) -> User:
         email=data.email,
         password_hash=hash_password(data.password),
         full_name=data.full_name,
+        emergency_contacts=[c.model_dump() for c in data.emergency_contacts] if getattr(data, 'emergency_contacts', None) else [],
     )
     db.add(user)
     await db.flush()  # populate id / defaults before returning

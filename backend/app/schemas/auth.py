@@ -14,6 +14,13 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
+class EmergencyContact(BaseModel):
+    name: str
+    relationship: str
+    phone: str
+    email: Optional[EmailStr] = None
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Registration
 # ═══════════════════════════════════════════════════════════════════════════
@@ -23,6 +30,7 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     full_name: str = Field(..., min_length=1, max_length=255)
+    emergency_contacts: Optional[List[EmergencyContact]] = []
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -76,6 +84,7 @@ class UserResponse(BaseModel):
     gender: Optional[str] = None
     allergies: List[str] = []
     chronic_conditions: List[str] = []
+    emergency_contacts: List[dict] = []
     is_active: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -93,3 +102,4 @@ class UserUpdate(BaseModel):
     gender: Optional[str] = Field(None, max_length=20)
     allergies: Optional[List[str]] = None
     chronic_conditions: Optional[List[str]] = None
+    emergency_contacts: Optional[List[EmergencyContact]] = None

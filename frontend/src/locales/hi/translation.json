@@ -1,17 +1,18 @@
 {
   "nav": {
     "dashboard": "डैशबोर्ड",
-    "upload_prescription": "नुस्खा अपलोड करें",
-    "my_prescriptions": "मेरे नुस्खे",
-    "medication_schedule": "दवा अनुसूची",
-    "medical_history": "चिकित्सा इतिहास",
-    "medicine_library": "दवा पुस्तकालय",
-    "ai_assistant": "AI सहायक",
-    "meditriage": "मेडीट्राएज (MediTriage)",
-    "emergency": "आपातकालीन",
-    "sign_out": "साइन आउट"
+    "upload_prescription": "पर्ची अपलोड करें",
+    "my_prescriptions": "मेरी पर्चियां",
+    "medication_schedule": "दवा का शेड्यूल",
+    "medical_history": "मेडिकल इतिहास",
+    "medicine_library": "दवा लाइब्रेरी",
+    "ai_assistant": "एआई सहायक",
+    "meditriage": "मेडीट्रायज (बीमारी का अनुमान)",
+    "emergency": "आपातकालीन और संपर्क",
+    "settings": "सेटिंग्स",
+    "sign_out": "लॉग आउट करें"
   },
   "common": {
-    "language": "भाषा"
+    "language": "भाषा (Language)"
   }
 }

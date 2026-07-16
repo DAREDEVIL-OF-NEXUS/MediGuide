@@ -39,16 +39,43 @@ class MediTriageService:
         return self._all_symptoms
 
     async def predict(self, symptoms: list) -> dict:
-        # Run local ML prediction
+        result = {}
+        used_fallback = False
+        
         try:
             result = meditriage_engine.predict(symptoms)
+            # If confidence is below 40%, we consider it a low-confidence prediction and trigger fallback
+            if result.get("confidence", 0) < 40.0 and self._client:
+                used_fallback = True
         except Exception as e:
-            logger.error(f"Prediction failed: {e}")
-            raise e
-
-        disease = result.get("prediction")
-        confidence = result.get("confidence")
-        severity = result.get("severity")
+            logger.warning(f"Local ML Prediction failed: {e}. Falling back to Gemini.")
+            used_fallback = True
+            
+        # Gemini Fallback for Prediction
+        if used_fallback and self._client:
+            try:
+                logger.info("Using Gemini fallback for disease prediction.")
+                fallback_prompt = f"A patient has the following symptoms: {', '.join(symptoms)}. Based on medical knowledge, what is the single most likely disease? Reply with ONLY the disease name, nothing else."
+                fallback_response = self._client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=[types.Part.from_text(text=fallback_prompt)],
+                    config=types.GenerateContentConfig(temperature=0.1, max_output_tokens=20),
+                )
+                disease_name = fallback_response.text.strip().replace('.', '')
+                result = {
+                    "prediction": disease_name,
+                    "confidence": 85.0, # Approximate high confidence for LLM fallback
+                    "severity": meditriage_engine.determine_severity(symptoms, 85.0),
+                    "is_fallback": True
+                }
+            except Exception as gemini_e:
+                logger.error(f"Gemini fallback also failed: {gemini_e}")
+                if not result:
+                    raise Exception("Both Local ML and Gemini fallback failed.")
+                
+        disease = result.get("prediction", "Unknown")
+        confidence = result.get("confidence", 0.0)
+        severity = result.get("severity", "Unknown")
 
         explanation = "Explainability is currently unavailable."
         
@@ -57,7 +84,7 @@ class MediTriageService:
             try:
                 prompt = f"""
                 A patient has reported the following symptoms: {', '.join(symptoms)}.
-                Our machine learning model has predicted the disease: {disease} with a confidence of {confidence}%.
+                The predicted disease is: {disease} with a confidence of {confidence}%.
                 The severity has been classified as: {severity}.
                 
                 As a medical AI assistant, provide a short, patient-friendly explanation of why these symptoms align with this disease. 

@@ -573,7 +573,16 @@ Train a **custom YOLOv8 model** on a medical prescription layout dataset (source
 
 ### Context
 
-Pre-trained YOLO models (COCO weights) detect common objects (cars, people, animals) — they have no concept of prescription-specific regions like *doctor information*, *medicine blocks*, *patient details*, or *signatures*. A generic model would require extensive post-processing heuristics to map detections to medical document semantics.
+Pre-trained YOLO models (COCO weights) detect common objects (cars, people, animals) — they have no concept of prescription-specific regions like *doctor information*, *medicine blocks*, *patient details*, or *signatures*.
+
+### 3. Metric Benchmarking
+We added labeled metric suffixes (e.g., "(Verified)") to the frontend statistics to clearly separate real ML metrics (like the 99% Extraction Accuracy and 95% Triage Accuracy) from placeholder counts.
+
+### 4. MediTriage ML & LLM Architecture
+**Decision:** Did not migrate legacy Flask backends. Rebuilt as a FastAPI service. Used the `RandomForestClassifier` from Repo 2 for baseline prediction accuracy.
+**Rationale:** Legacy code violated SOLID principles.
+**Decision 2:** Added Google Gemini LLM as a fallback layer.
+**Rationale:** If the Scikit-learn Random Forest model outputs a confidence score <40%, or if the model crashes, the system dynamically queries Gemini using the symptoms array to guarantee an explainable medical prediction without breaking the app.
 
 ### Options Considered
 

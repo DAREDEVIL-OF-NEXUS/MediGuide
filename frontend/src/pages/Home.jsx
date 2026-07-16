@@ -293,11 +293,12 @@ export default function Home() {
 
       {/* ═══════════════ STATS SECTION ═══════════════ */}
       <section className="relative max-w-6xl mx-auto px-6 -mt-8 z-20">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
           <StatCard value={8}  suffix="+"  label="AI Models Integrated (Active)" delay={0} />
           <StatCard value={1000} suffix="+" label="Drugs in DB (Verified)"    delay={0.1} />
           <StatCard value={50}  suffix="+"  label="Epochs Trained (YOLOv8)"       delay={0.2} />
           <StatCard value={99}  suffix="%"  label="Extraction Accuracy (Benchmarked)"  delay={0.3} />
+          <StatCard value={95}  suffix="%"  label="Triage ML Accuracy (Verified)"  delay={0.4} />
         </div>
       </section>
 

@@ -43,6 +43,13 @@ MediGuide AI is a production-grade healthcare platform that automates prescripti
 - Source citations distinguish "Verified" vs "AI-Generated" information
 - Safety disclaimers on every medical response
 
+### **Phase 2: MediTrial Integration (Complete) ✅**
+- [x] Integrate the MediTrial disease prediction module.
+- [x] Allow users to select symptoms and receive AI predictions.
+- [x] Display prediction confidence, ML model accuracy, and Explainable AI output (Gemini Fallback).
+- [x] Add severity classification: Home Care, Consult Doctor, or Visit Hospital.
+- [x] Add hospital appointment links (ORS Portal, eSanjeevani, Practo).
+
 ### 📚 Medicine Library
 - Comprehensive drug details: descriptions, side effects, interactions, contraindications
 - Pregnancy categories and storage instructions

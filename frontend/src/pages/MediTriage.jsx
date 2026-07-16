@@ -10,6 +10,9 @@ import {
   CheckCircle2,
   BrainCircuit,
   Loader2,
+  CalendarPlus,
+  Video,
+  ExternalLink,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
@@ -183,7 +186,14 @@ export default function MediTriage() {
                   <div>
                     <div className="flex justify-between items-end mb-2">
                       <div className="text-dark-400 text-sm uppercase tracking-wider font-semibold">Model Confidence</div>
-                      <div className="text-primary-400 font-bold">{result.confidence}%</div>
+                      <div className="flex items-center gap-2">
+                        {result.is_fallback && (
+                          <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30">
+                            Gemini Fallback
+                          </span>
+                        )}
+                        <div className="text-primary-400 font-bold">{result.confidence}%</div>
+                      </div>
                     </div>
                     <div className="h-2 w-full bg-dark-800 rounded-full overflow-hidden">
                       <motion.div 
@@ -211,6 +221,56 @@ export default function MediTriage() {
                     </p>
                   </div>
                 </div>
+
+                {/* Appointment Booking */}
+                {(result.severity === 'Consult Doctor' || result.severity === 'Visit Hospital') && (
+                  <div className="glass-card p-6 border border-dark-700/50 space-y-4">
+                    <div className="flex items-center gap-2 text-white font-bold text-lg border-b border-dark-700/50 pb-3">
+                      <CalendarPlus className="w-5 h-5 text-indigo-400" />
+                      Book an Appointment
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <a href="https://ors.gov.in" target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 rounded-xl bg-dark-800 border border-dark-700 hover:border-indigo-500/50 transition-colors group">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
+                            <Stethoscope className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-sm text-white group-hover:text-indigo-400 transition-colors">ORS Portal</div>
+                            <div className="text-xs text-dark-400">Gov. Hospitals</div>
+                          </div>
+                        </div>
+                        <ExternalLink className="w-4 h-4 text-dark-500 group-hover:text-indigo-400" />
+                      </a>
+                      
+                      <a href="https://esanjeevani.mohfw.gov.in" target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 rounded-xl bg-dark-800 border border-dark-700 hover:border-teal-500/50 transition-colors group">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-teal-500/10 rounded-lg text-teal-400">
+                            <Video className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-sm text-white group-hover:text-teal-400 transition-colors">eSanjeevani</div>
+                            <div className="text-xs text-dark-400">Teleconsultation</div>
+                          </div>
+                        </div>
+                        <ExternalLink className="w-4 h-4 text-dark-500 group-hover:text-teal-400" />
+                      </a>
+
+                      <a href="https://www.practo.com/" target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 rounded-xl bg-dark-800 border border-dark-700 hover:border-blue-500/50 transition-colors group sm:col-span-2">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                            <Activity className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-sm text-white group-hover:text-blue-400 transition-colors">Practo</div>
+                            <div className="text-xs text-dark-400">Private Clinics & Specialists</div>
+                          </div>
+                        </div>
+                        <ExternalLink className="w-4 h-4 text-dark-500 group-hover:text-blue-400" />
+                      </a>
+                    </div>
+                  </div>
+                )}
 
               </motion.div>
             ) : (

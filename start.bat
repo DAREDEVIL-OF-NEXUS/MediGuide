@@ -1,2 +1,14 @@
-start cmd /k "cd backend && venv\Scripts\activate || echo No venv found && uvicorn app.main:app --reload --port 8000"
-start cmd /k "cd frontend && npm run dev"
+@echo off
+echo Starting MediGuide AI...
+
+echo Checking/setting up Python virtual environment...
+if not exist "backend\venv" (
+    echo Creating virtual environment...
+    python -m venv backend\venv
+)
+
+echo Starting backend...
+start cmd /k "cd backend && venv\Scripts\activate && pip install -r requirements.txt && python -m uvicorn app.main:app --reload --port 8000"
+
+echo Starting frontend...
+start cmd /k "cd frontend && npm i && npm run dev"

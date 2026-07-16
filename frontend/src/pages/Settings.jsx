@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Server, WifiOff, HardDrive, RefreshCw } from 'lucide-react';
+import { Settings as SettingsIcon, Server, WifiOff, HardDrive, RefreshCw, Globe } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 export default function Settings() {
+  const { t, i18n } = useTranslation();
   const [offlineAi, setOfflineAi] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -98,6 +100,39 @@ export default function Settings() {
                 <h4 className={`font-semibold ${offlineAi ? 'text-white' : 'text-dark-300'}`}>Local Mode (Ollama)</h4>
                 <p className="text-xs text-dark-500 mt-1">Runs Llama 3.3 and LLaVA entirely on your own hardware.</p>
              </div>
+          </div>
+        </div>
+        
+        {/* Language Settings */}
+        <div className="glass-card p-6">
+          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Globe className="w-5 h-5 text-blue-400" />
+            Language / Region
+          </h2>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-dark-600 bg-dark-800/50">
+            <div className="flex-1">
+              <h3 className="font-semibold text-white flex items-center gap-2">
+                Application Language
+              </h3>
+              <p className="text-dark-400 text-sm mt-1">
+                Select your preferred language for the interface.
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+              <button 
+                onClick={() => i18n.changeLanguage('en')}
+                className={`px-4 py-2 rounded-lg transition-colors font-medium text-sm ${i18n.language === 'en' ? 'bg-primary-500 text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}
+              >
+                English
+              </button>
+              <button 
+                onClick={() => i18n.changeLanguage('hi')}
+                className={`px-4 py-2 rounded-lg transition-colors font-medium text-sm ${i18n.language === 'hi' ? 'bg-primary-500 text-white' : 'bg-dark-700 text-dark-300 hover:bg-dark-600'}`}
+              >
+                हिन्दी (Hindi)
+              </button>
+            </div>
           </div>
         </div>
       </div>

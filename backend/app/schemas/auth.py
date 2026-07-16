@@ -17,8 +17,8 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 class EmergencyContact(BaseModel):
     name: str
     relationship: str
-    phone: str
-    email: Optional[EmailStr] = None
+    email: EmailStr
+    phone: Optional[str] = None
 
 
 # ═══════════════════════════════════════════════════════════════════════════

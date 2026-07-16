@@ -19,7 +19,7 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [ecName, setEcName] = useState('');
-  const [ecPhone, setEcPhone] = useState('');
+  const [ecEmail, setEcEmail] = useState('');
   const [ecRelation, setEcRelation] = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -51,10 +51,10 @@ export default function Register() {
     setIsLoading(true);
     try {
       const emergencyContacts = [];
-      if (ecName && ecPhone && ecRelation) {
+      if (ecName && ecEmail && ecRelation) {
         emergencyContacts.push({
           name: ecName,
-          phone: ecPhone,
+          email: ecEmail,
           relationship: ecRelation
         });
       }
@@ -237,13 +237,13 @@ export default function Register() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="label">Phone</label>
+                    <label className="label">Email</label>
                     <input
-                      type="tel"
-                      value={ecPhone}
-                      onChange={(e) => setEcPhone(e.target.value)}
+                      type="email"
+                      value={ecEmail}
+                      onChange={(e) => setEcEmail(e.target.value)}
                       className="input-field"
-                      placeholder="Phone Number"
+                      placeholder="Contact Email"
                     />
                   </div>
                   <div>

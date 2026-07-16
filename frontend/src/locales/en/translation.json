@@ -1,0 +1,16 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "upload_prescription": "Upload Prescription",
+    "my_prescriptions": "My Prescriptions",
+    "medication_schedule": "Medication Schedule",
+    "medical_history": "Medical History",
+    "medicine_library": "Medicine Library",
+    "ai_assistant": "AI Assistant",
+    "emergency": "Emergency & Access",
+    "sign_out": "Sign Out"
+  },
+  "common": {
+    "language": "Language"
+  }
+}

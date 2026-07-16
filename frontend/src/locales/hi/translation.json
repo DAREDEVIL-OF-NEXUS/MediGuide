@@ -1,0 +1,16 @@
+{
+  "nav": {
+    "dashboard": "डैशबोर्ड",
+    "upload_prescription": "नुस्खा अपलोड करें",
+    "my_prescriptions": "मेरे नुस्खे",
+    "medication_schedule": "दवा अनुसूची",
+    "medical_history": "चिकित्सा इतिहास",
+    "medicine_library": "दवा पुस्तकालय",
+    "ai_assistant": "AI सहायक",
+    "emergency": "आपातकालीन",
+    "sign_out": "साइन आउट"
+  },
+  "common": {
+    "language": "भाषा"
+  }
+}

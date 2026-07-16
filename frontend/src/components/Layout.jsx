@@ -15,18 +15,20 @@ import {
   Activity,
   BookOpen,
   PhoneCall,
+  Languages,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/prescriptions/upload', icon: Upload, label: 'Upload Prescription' },
-  { to: '/prescriptions', icon: FileText, label: 'My Prescriptions' },
-  { to: '/schedule', icon: CalendarClock, label: 'Medication Schedule' },
-  { to: '/history', icon: Activity, label: 'Medical History' },
-  { to: '/medicines', icon: BookOpen, label: 'Medicine Library' },
-  { to: '/assistant', icon: Bot, label: 'AI Assistant' },
-  { to: '/emergency', icon: PhoneCall, label: 'Emergency' },
+  { to: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+  { to: '/prescriptions/upload', icon: Upload, labelKey: 'nav.upload_prescription' },
+  { to: '/prescriptions', icon: FileText, labelKey: 'nav.my_prescriptions' },
+  { to: '/schedule', icon: CalendarClock, labelKey: 'nav.medication_schedule' },
+  { to: '/history', icon: Activity, labelKey: 'nav.medical_history' },
+  { to: '/medicines', icon: BookOpen, labelKey: 'nav.medicine_library' },
+  { to: '/assistant', icon: Bot, labelKey: 'nav.ai_assistant' },
+  { to: '/emergency', icon: PhoneCall, labelKey: 'nav.emergency' },
 ];
 
 function NavItem({ to, icon: Icon, label, comingSoon, collapsed, onClick }) {
@@ -75,10 +77,16 @@ export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'hi' : 'en';
+    i18n.changeLanguage(newLang);
   };
 
   const closeMobileSidebar = () => setSidebarOpen(false);
@@ -136,7 +144,7 @@ export default function Layout() {
         {/* Navigation */}
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
-            <NavItem key={item.to} {...item} collapsed={collapsed} onClick={closeMobileSidebar} />
+            <NavItem key={item.to} to={item.to} icon={item.icon} label={t(item.labelKey)} collapsed={collapsed} onClick={closeMobileSidebar} />
           ))}
         </nav>
 
@@ -160,10 +168,19 @@ export default function Layout() {
                 <p className="text-xs text-dark-500 truncate">{user?.email || ''}</p>
               </div>
             )}
+            
+            <button
+              onClick={toggleLanguage}
+              className="p-2 rounded-lg text-dark-500 hover:text-primary-400 hover:bg-primary-500/10 transition-all"
+              title={t('common.language')}
+            >
+              <Languages className="w-4 h-4" />
+            </button>
+
             <button
               onClick={handleLogout}
               className="p-2 rounded-lg text-dark-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-              title="Sign out"
+              title={t('nav.sign_out')}
             >
               <LogOut className="w-4 h-4" />
             </button>

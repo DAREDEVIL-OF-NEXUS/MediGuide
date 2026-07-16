@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.config import settings
-from app.models.prescription import Prescription
+from app.models.prescription import Prescription, PrescriptionMedicine
 from app.schemas.assistant import ChatMessage
 from app.services.rag_service import rag_service
 from app.ai.ollama_client import ollama_client
@@ -127,9 +127,7 @@ Guidelines:
             select(Prescription)
             .options(
                 selectinload(Prescription.prescription_medicines).selectinload(
-                    # Although selectin is set on models, selectinload ensures eager loading here
-                    # without rely on model defaults.
-                    # We can use options/selectinload for prescription_medicines
+                    PrescriptionMedicine.medicine
                 )
             )
             .where(

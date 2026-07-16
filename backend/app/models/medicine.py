@@ -39,6 +39,7 @@ class Medicine(Base):
         String(255), nullable=True
     )
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    photo_url: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
 
     # ── Structured safety data (JSON arrays) ─────────────────────────────
     brand_names: Mapped[Optional[list]] = mapped_column(

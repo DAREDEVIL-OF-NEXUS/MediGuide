@@ -28,8 +28,6 @@ logger = logging.getLogger(__name__)
 class GeminiExtractor:
     """Extract structured prescription data via Gemini Vision."""
 
-    MODEL_NAME: str = "gemini-2.5-flash"
-
     def __init__(self) -> None:
         self._client = genai.Client(api_key=settings.gemini_api_key)
 
@@ -73,13 +71,13 @@ class GeminiExtractor:
                     # LLaVA typically doesn't support JSON schema enforcement natively via the same API,
                     # but we can instruct it in the prompt and parse its output.
                     raw_text = await ollama_client.analyze_image(
-                        model="llava",
+                        model=settings.ollama_vision_model,
                         prompt=PRESCRIPTION_EXTRACTION_PROMPT,
                         image_bytes=processed
                     )
                 else:
                     response = self._client.models.generate_content(
-                        model=self.MODEL_NAME,
+                        model=settings.gemini_model,
                         contents=[
                             types.Content(
                                 role="user",

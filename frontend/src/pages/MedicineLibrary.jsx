@@ -64,6 +64,17 @@ function MedicineCard({ med }) {
             className="border-t border-dark-700/50 bg-dark-900/50"
           >
             <div className="p-5 space-y-6">
+              {med.photo_url && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-white mb-2">Medicine Image</h4>
+                  <img 
+                    src={med.photo_url} 
+                    alt={med.name} 
+                    className="w-full max-w-sm rounded-xl border border-dark-700/50 object-cover"
+                  />
+                </div>
+              )}
+
               {med.description && (
                 <div>
                   <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">

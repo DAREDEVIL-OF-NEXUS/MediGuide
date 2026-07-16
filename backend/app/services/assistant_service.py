@@ -28,8 +28,6 @@ logger = logging.getLogger(__name__)
 class AssistantService:
     """Orchestrates AI assistant queries using Gemini and database context."""
 
-    MODEL_NAME: str = "gemini-2.5-flash"
-
     def __init__(self) -> None:
         self._client = genai.Client(api_key=settings.gemini_api_key)
 
@@ -96,7 +94,7 @@ Guidelines:
                 prompt_text += f"User: {message}\nAssistant:"
                 
                 reply = await ollama_client.generate_text(
-                    model="llama3.3",
+                    model=settings.ollama_model,
                     prompt=prompt_text,
                     system=system_prompt
                 )
@@ -104,7 +102,7 @@ Guidelines:
                     reply = "I apologize, but I was unable to generate a response from the offline AI. Please try again."
             else:
                 response = self._client.models.generate_content(
-                    model=self.MODEL_NAME,
+                    model=settings.gemini_model,
                     contents=contents,
                     config=types.GenerateContentConfig(
                         system_instruction=system_prompt,

@@ -539,9 +539,11 @@ export default function About() {
               viewport={{ once: true, margin: "-50px" }}
             >
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-teal-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary-500/20">
-                  LB
-                </div>
+                <img 
+                  src="/lakshay_photo.jpg" 
+                  alt="Lakshay Bharti" 
+                  className="w-14 h-14 rounded-2xl object-cover border border-primary-500/30 shadow-lg shadow-primary-500/20"
+                />
                 <div>
                   <h3 className="text-lg font-bold text-white">Lakshay Bharti</h3>
                   <p className="text-sm text-dark-400">Creator & Developer</p>

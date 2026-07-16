@@ -46,7 +46,12 @@ class Settings(BaseSettings):
 
     # ── Google Gemini AI ─────────────────────────────────────────────────
     gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.5-flash"
     openfda_api_key: str = ""
+
+    # ── Offline AI Models ─────────────────────────────────────────────────
+    ollama_model: str = "llama3.2"
+    ollama_vision_model: str = "llava"
 
     # ── Supabase Storage ─────────────────────────────────────────────────
     supabase_url: str = "your-supabase-url"

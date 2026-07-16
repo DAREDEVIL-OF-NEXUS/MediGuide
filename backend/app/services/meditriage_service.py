@@ -60,12 +60,12 @@ class MediTriageService:
                 
                 if settings.use_offline_ai:
                     response_text = await ollama_client.generate_text(
-                        model="llama3.3",
+                        model=settings.ollama_model,
                         prompt=fallback_prompt
                     )
                 else:
                     fallback_response = self._client.models.generate_content(
-                        model="gemini-2.5-flash",
+                        model=settings.gemini_model,
                         contents=[types.Part.from_text(text=fallback_prompt)],
                         config=types.GenerateContentConfig(temperature=0.1, max_output_tokens=20),
                     )
@@ -103,12 +103,12 @@ class MediTriageService:
                 
                 if settings.use_offline_ai:
                     response_text = await ollama_client.generate_text(
-                        model="llama3.3",
+                        model=settings.ollama_model,
                         prompt=prompt
                     )
                 else:
                     response = self._client.models.generate_content(
-                        model="gemini-2.5-flash",
+                        model=settings.gemini_model,
                         contents=[types.Part.from_text(text=prompt)],
                         config=types.GenerateContentConfig(
                             temperature=0.3,
